@@ -106,7 +106,3 @@ The project consists of the following functional modules:
    ```bash
    make docker-up
    ```
-5. Run tests:
-   ```bash
-   make test
-   ```
