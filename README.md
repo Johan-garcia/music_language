@@ -91,7 +91,7 @@ The project consists of the following functional modules:
 # Usage
 1. Clone the repository and navigate to the project directory:
    ```bash
-   git clone <your-repo>
+   git clone music_filtering_backend
    cd music-recommendation-api
    ```
 2. Set up environment variables interactively:
