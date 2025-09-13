@@ -1,114 +1,102 @@
-import httpx
-from typing import Optional
+import lyricsgenius
+from typing import Optional, Dict
+import logging
 from app.core.config import settings
-import re
+
+logger = logging.getLogger(__name__)
 
 class GeniusService:
     def __init__(self):
         self.access_token = settings.GENIUS_ACCESS_TOKEN
-        self.base_url = "https://api.genius.com"
-        self.headers = {
-            "Authorization": f"Bearer {self.access_token}"
-        }
-    
-    async def search_song(self, title: str, artist: str) -> Optional[dict]:
-        """Search for a song on Genius"""
-        try:
-            query = f"{title} {artist}".strip()
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{self.base_url}/search",
-                    headers=self.headers,
-                    params={"q": query}
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    hits = data.get("response", {}).get("hits", [])
-                    
-                    if hits:
-                        # Find the best match
-                        for hit in hits:
-                            song = hit.get("result", {})
-                            if self._is_good_match(song.get("title", ""), title, song.get("primary_artist", {}).get("name", ""), artist):
-                                return {
-                                    "genius_id": song.get("id"),
-                                    "title": song.get("title"),
-                                    "artist": song.get("primary_artist", {}).get("name"),
-                                    "url": song.get("url"),
-                                    "thumbnail_url": song.get("song_art_image_url")
-                                }
-                
-                return None
-        except Exception as e:
-            print(f"Genius search error: {e}")
-            return None
-    
-    async def get_lyrics(self, title: str, artist: str) -> Optional[str]:
-        """Get lyrics for a song"""
-        try:
-            # First, search for the song
-            song_data = await self.search_song(title, artist)
-            if not song_data:
-                return None
-            
-            # Genius API doesn't provide lyrics directly, so we'd need to scrape
-            # For this example, we'll return a placeholder
-            # In production, you'd use lyricsgenius library or web scraping
-            
-            song_url = song_data.get("url")
-            if song_url:
-                # Use lyricsgenius library for actual implementation
-                try:
-                    import lyricsgenius
-                    genius = lyricsgenius.Genius(self.access_token)
-                    genius.verbose = False
-                    genius.remove_section_headers = True
-                    
-                    song = genius.search_song(title, artist)
-                    if song:
-                        return song.lyrics
-                except ImportError:
-                    print("lyricsgenius library not available")
-                except Exception as e:
-                    print(f"Lyrics extraction error: {e}")
-            
-            return None
-        except Exception as e:
-            print(f"Genius lyrics error: {e}")
-            return None
-    
-    def _is_good_match(self, genius_title: str, search_title: str, genius_artist: str, search_artist: str) -> bool:
-        """Check if the Genius result is a good match for the search query"""
-        def normalize(text: str) -> str:
-            return re.sub(r'[^\w\s]', '', text.lower()).strip()
+        self.genius = None
         
-        norm_genius_title = normalize(genius_title)
-        norm_search_title = normalize(search_title)
-        norm_genius_artist = normalize(genius_artist)
-        norm_search_artist = normalize(search_artist)
-        
-        # Check if titles are similar (at least 70% match)
-        title_similarity = self._similarity(norm_genius_title, norm_search_title)
-        artist_similarity = self._similarity(norm_genius_artist, norm_search_artist)
-        
-        return title_similarity > 0.7 and artist_similarity > 0.5
-    
-    def _similarity(self, a: str, b: str) -> float:
-        """Calculate similarity between two strings"""
-        if not a or not b:
-            return 0.0
-        
-        # Simple word-based similarity
-        words_a = set(a.split())
-        words_b = set(b.split())
-        
-        if not words_a or not words_b:
-            return 0.0
-        
-        intersection = words_a.intersection(words_b)
-        union = words_a.union(words_b)
-        
-        return len(intersection) / len(union)
+        # Only initialize if access token is provided
+        if self.access_token:
+            try:
+                self.genius = lyricsgenius.Genius(self.access_token)
+                self.genius.verbose = False  # Turn off status messages
+                self.genius.remove_section_headers = True  # Remove section headers from lyrics
+                logger.info("Genius service initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Genius service: {e}")
+                self.genius = None
+        else:
+            logger.info("Genius access token not provided, service disabled")
 
+    def is_available(self) -> bool:
+        """Check if Genius service is available"""
+        return self.genius is not None
+
+    async def search_lyrics(self, song_title: str, artist_name: str) -> Optional[Dict]:
+        """Search for song lyrics on Genius"""
+        if not self.is_available():
+            logger.warning("Genius service not available")
+            return None
+        
+        try:
+            # Search for the song
+            song = self.genius.search_song(song_title, artist_name)
+            
+            if song:
+                return {
+                    'title': song.title,
+                    'artist': song.artist,
+                    'lyrics': song.lyrics,
+                    'url': song.url,
+                    'genius_id': song.id,
+                    'album': getattr(song, 'album', None),
+                    'release_date': getattr(song, 'release_date_for_display', None),
+                    'thumbnail_url': song.song_art_image_thumbnail_url if hasattr(song, 'song_art_image_thumbnail_url') else None
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error searching lyrics on Genius: {e}")
+            return None
+
+    async def get_song_by_id(self, genius_id: int) -> Optional[Dict]:
+        """Get song information by Genius ID"""
+        if not self.is_available():
+            return None
+        
+        try:
+            song = self.genius.song(genius_id)
+            
+            if song:
+                return {
+                    'title': song['title'],
+                    'artist': song['primary_artist']['name'],
+                    'lyrics': song['lyrics'] if 'lyrics' in song else None,
+                    'url': song['url'],
+                    'genius_id': song['id'],
+                    'album': song['album']['name'] if song.get('album') else None,
+                    'release_date': song.get('release_date_for_display'),
+                    'thumbnail_url': song.get('song_art_image_thumbnail_url')
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error getting song by ID from Genius: {e}")
+            return None
+
+    async def search_artist(self, artist_name: str) -> Optional[Dict]:
+        """Search for artist information on Genius"""
+        if not self.is_available():
+            return None
+        
+        try:
+            artist = self.genius.search_artist(artist_name, max_songs=0)
+            
+            if artist:
+                return {
+                    'name': artist.name,
+                    'genius_id': artist.id,
+                    'url': artist.url,
+                    'image_url': getattr(artist, 'image_url', None),
+                    'description': getattr(artist, 'description', None)
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error searching artist on Genius: {e}")
+            return None
+
+# Create service instance
 genius_service = GeniusService()

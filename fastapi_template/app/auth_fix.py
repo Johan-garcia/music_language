@@ -8,7 +8,6 @@ import secrets
 from app.database import get_db
 from app.models.models import User
 from app.schemas.schemas import User as UserSchema, UserCreate, Token, SpotifyAuthURL, SpotifyCallback
-from app.services.spotify_service import spotify_service
 from app.core.config import settings
 
 from passlib.context import CryptContext
@@ -101,28 +100,3 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 @router.get("/me", response_model=UserSchema)
 async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
-
-@router.get("/spotify/auth", response_model=SpotifyAuthURL)
-async def get_spotify_auth_url(current_user: User = Depends(get_current_user)):
-    """Get Spotify authorization URL"""
-    state = secrets.token_urlsafe(16)
-    auth_url = spotify_service.get_auth_url(state=state)
-    return {"auth_url": auth_url}
-
-@router.post("/spotify/callback")
-async def spotify_callback(
-    callback_data: SpotifyCallback,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Handle Spotify OAuth callback"""
-    token_info = await spotify_service.get_access_token(callback_data.code)
-    if not token_info:
-        raise HTTPException(status_code=400, detail="Failed to get Spotify access token")
-    
-    # Store tokens in user record
-    current_user.spotify_access_token = token_info.get("access_token")
-    current_user.spotify_refresh_token = token_info.get("refresh_token")
-    db.commit()
-    
-    return {"message": "Spotify account connected successfully"}

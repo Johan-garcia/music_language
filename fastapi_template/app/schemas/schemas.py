@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -17,8 +17,9 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     
-    @validator('password')
-    def validate_password(cls, v):
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
         if len(v) < 6:
             raise ValueError('Password must be at least 6 characters long')
         return v
@@ -28,14 +29,13 @@ class UserUpdate(BaseModel):
     preferred_language: Optional[str] = None
 
 class UserInDB(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     role: UserRole
     is_active: bool
     is_verified: bool
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 class User(UserInDB):
     pass
@@ -63,6 +63,8 @@ class SongCreate(SongBase):
     pass
 
 class Song(SongBase):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     lyrics: Optional[str] = None
     thumbnail_url: Optional[str] = None
@@ -70,9 +72,6 @@ class Song(SongBase):
     view_count: int = 0
     is_explicit: bool = False
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 # Playlist schemas
 class PlaylistBase(BaseModel):
@@ -84,12 +83,11 @@ class PlaylistCreate(PlaylistBase):
     pass
 
 class Playlist(PlaylistBase):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     owner_id: int
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 # Music search and streaming
 class MusicSearchRequest(BaseModel):
@@ -97,8 +95,9 @@ class MusicSearchRequest(BaseModel):
     language: Optional[str] = None
     limit: int = 10
     
-    @validator('limit')
-    def validate_limit(cls, v):
+    @field_validator('limit')
+    @classmethod
+    def validate_limit(cls, v: int) -> int:
         if v > 50:
             raise ValueError('Limit cannot exceed 50')
         return v
