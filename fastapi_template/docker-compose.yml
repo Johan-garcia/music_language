@@ -21,13 +21,15 @@ services:
       - music-network
 
   api:
+    env_file:
+      - .env
     build: .
     container_name: music-api
     depends_on:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://music:music@db:5432/musicdb
+      - DATABASE_URL=${DATABASE_URL}
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
       - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
       - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
@@ -50,18 +52,6 @@ services:
     networks:
       - music-network
 
-  # Optional: Redis for caching (future enhancement)
-  redis:
-    image: redis:7-alpine
-    container_name: music-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-    restart: unless-stopped
-    networks:
-      - music-network
 
 volumes:
   postgres_data:

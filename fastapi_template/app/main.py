@@ -44,20 +44,20 @@ async def lifespan(app: FastAPI):
             )
             db.add(admin_user)
             db.commit()
-            logger.info(f"✅ Admin user created: {settings.ADMIN_EMAIL}")
+            logger.info(f"Admin user created: {settings.ADMIN_EMAIL}")
         else:
-            logger.info(f"✅ Admin user exists: {settings.ADMIN_EMAIL}")
+            logger.info(f"Admin user exists: {settings.ADMIN_EMAIL}")
     except Exception as e:
-        logger.error(f"❌ Error creating admin user: {e}")
+        logger.error(f"Error creating admin user: {e}")
     finally:
         db.close()
     
-    logger.info("🚀 Application startup complete!")
+    logger.info("Application startup complete!")
     
     yield
     
     # Shutdown
-    logger.info("🛑 Shutting down Music Recommendation API...")
+    logger.info("Shutting down Music Recommendation API...")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
