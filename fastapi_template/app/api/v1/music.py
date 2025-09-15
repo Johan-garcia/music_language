@@ -10,7 +10,7 @@ from app.schemas.schemas import (
 )
 from app.services.youtube_service import youtube_service
 from app.services.spotify_service import spotify_service
-from app.services.genius_service import genius_service
+from app.services.lyrics_service import lyrics_service
 from app.api.v1.auth import get_current_user
 
 router = APIRouter()
@@ -142,7 +142,7 @@ async def get_song_lyrics(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get lyrics for a song"""
+    """Get lyrics for a song using free lyrics scraper"""
     
     song = db.query(Song).filter(Song.id == song_id).first()
     if not song:
@@ -156,8 +156,8 @@ async def get_song_lyrics(
             source="cached"
         )
     
-    # Fetch lyrics from Genius
-    lyrics = await genius_service.get_lyrics(song.title, song.artist)
+    # Fetch lyrics from free lyrics service (replaces Genius)
+    lyrics = await lyrics_service.get_lyrics(song.title, song.artist)
     
     if lyrics:
         # Cache lyrics in database
@@ -167,7 +167,7 @@ async def get_song_lyrics(
         return LyricsResponse(
             song_id=song_id,
             lyrics=lyrics,
-            source="genius"
+            source="free_service"
         )
     else:
         raise HTTPException(status_code=404, detail="Lyrics not found")

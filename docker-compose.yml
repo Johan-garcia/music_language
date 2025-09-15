@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: musicdb
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # si tienes un init.sql:
-      # - ./app/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U music -d musicdb"]
       interval: 5s
@@ -23,7 +21,6 @@ services:
     env_file: 
       - .env
     environment:
-      # asegúrate que tu app use esta URL dentro de la red de compose:
       DATABASE_URL: postgresql+asyncpg://music:music@db:5432/musicdb
     ports:
       - "8000:8000"
