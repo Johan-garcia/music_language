@@ -5,7 +5,6 @@ from fastapi.exceptions import RequestValidationError
 import time
 import logging
 from contextlib import asynccontextmanager
-
 from app.core.config import settings
 from app.api.v1 import auth, music, recommendations, admin
 from app.database import engine

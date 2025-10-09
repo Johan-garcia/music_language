@@ -1,0 +1,12 @@
+.lyrics {
+  background-color: #181818;
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px auto;
+  width: 60%;
+}
+
+.lyrics h2 {
+  margin-bottom: 10px;
+}

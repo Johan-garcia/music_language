@@ -1,0 +1,12 @@
+.video {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px;
+}
+
+.video iframe {
+  width: 640px;
+  height: 360px;
+  border-radius: 10px;
+}
