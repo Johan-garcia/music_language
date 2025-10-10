@@ -1,4 +1,5 @@
 import os
+from typing import List
 from pydantic_settings import BaseSettings
 
 
@@ -13,14 +14,30 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Admin user
-    ADMIN_EMAIL: str = "admin@musicapi.com"
+    ADMIN_EMAIL: str = "admin@gmail.com"
     ADMIN_PASSWORD: str = "admin123"
     
     # Database
     DATABASE_URL: str = "sqlite:///./music_api.db"
     
-    # CORS - simplified
-    BACKEND_CORS_ORIGINS: str = "*"
+
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+        """
+        Devuelve la lista de orígenes permitidos para CORS.
+        En desarrollo, permite localhost en diferentes puertos.
+        En producción, debes especificar los dominios exactos.
+        """
+        return [
+            "http://localhost",
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:8080",
+            "http://127.0.0.1",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:8080",
+        ]
     
     # External API Keys (optional)
     SPOTIFY_CLIENT_ID: str = ""
@@ -33,7 +50,7 @@ class Settings(BaseSettings):
     model_config = {
         "case_sensitive": True,
         "env_file": ".env",
-        "extra": "ignore"  # This will ignore extra fields
+        "extra": "ignore"
     }
 
 

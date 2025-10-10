@@ -84,19 +84,20 @@ app = FastAPI(
     3. Include it in the Authorization header: `Bearer <token>`
     
     ## Admin Access
-    - Default admin: `admin@musicapi.com` / `admin123`
+    - Default admin: `admin@gmail.com` / `admin123`
     - Admin endpoints are available under `/admin/`
     """,
     lifespan=lifespan
 )
 
-# Set up CORS
+# ✅ CORREGIDO: Set up CORS - DEBE estar ANTES de los routers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,  # Ahora es una lista
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Permite GET, POST, PUT, DELETE, OPTIONS, etc.
+    allow_headers=["*"],  # Permite todos los headers (Content-Type, Authorization, etc.)
+    expose_headers=["*"],  # Expone todos los headers en la respuesta
 )
 
 # Request timing middleware
@@ -107,36 +108,56 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     
-    # Log API usage (simplified - in production, use proper logging/monitoring)
-    logger.info(f"{request.method} {request.url.path} - {response.status_code} - {process_time:.3f}s")
+    # Log API usage
+    logger.info(
+        f"{request.method} {request.url.path} - "
+        f"{response.status_code} - {process_time:.3f}s"
+    )
     
     return response
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(f"Validation error on {request.url.path}: {exc.errors()}")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "detail": "Validation error",
             "errors": exc.errors(),
-            "body": exc.body
+            "body": str(exc.body) if exc.body else None
         }
     )
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception: {exc}")
+    logger.error(f"Unhandled exception on {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Internal server error"}
+        content={"detail": "Internal server error", "message": str(exc)}
     )
 
 # Include routers
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
-app.include_router(music.router, prefix=f"{settings.API_V1_STR}/music", tags=["music"])
-app.include_router(recommendations.router, prefix=f"{settings.API_V1_STR}/recommendations", tags=["recommendations"])
-app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
+app.include_router(
+    auth.router, 
+    prefix=f"{settings.API_V1_STR}/auth", 
+    tags=["authentication"]
+)
+app.include_router(
+    music.router, 
+    prefix=f"{settings.API_V1_STR}/music", 
+    tags=["music"]
+)
+app.include_router(
+    recommendations.router, 
+    prefix=f"{settings.API_V1_STR}/recommendations", 
+    tags=["recommendations"]
+)
+app.include_router(
+    admin.router, 
+    prefix=f"{settings.API_V1_STR}/admin", 
+    tags=["admin"]
+)
 
 @app.get("/")
 async def root():
