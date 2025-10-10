@@ -1,0 +1,57 @@
+.login {
+  background-color: #181818;
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 350px;
+  margin: 100px auto;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.login h2 {
+  margin-bottom: 20px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.login-form input {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #282828;
+  color: white;
+  font-size: 14px;
+}
+
+.login-form input:focus {
+  outline: 2px solid #1db954; /* verde Spotify */
+}
+
+.login-form button {
+  background-color: #1db954;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.login-form button:hover {
+  background-color: #17a84b;
+}
+
+.link {
+  color: #1db954;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

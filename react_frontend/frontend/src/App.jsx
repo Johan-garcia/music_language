@@ -1,53 +1,41 @@
 import { useState } from "react";
-import Header from "./features/header/Header";
-import LanguageSelector from "./features/language_select/LanguageSelect";
-import Lyrics from "./features/lyrics/Lyrics";
-import Player from "./features/player/Player";
-import UrlInput from "./features/url_input/UrlInput";
-import Video from "./features/video/Video";
+import Login from "./features/login/Login";
+import SignUp from "./features/signup/Sign_Up";
+import Home from "./features/home/Home";
 import "./App.css";
 
 function App() {
-  // Estado global compartido
-  const [songData, setSongData] = useState(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("es");
-  const [isPlaying, setIsPlaying] = useState(false);
+  // Página actual ("login", "signup" o "home")
+  const [currentPage, setCurrentPage] = useState("login");
 
-  // Función para manejar datos de la canción obtenidos desde UrlInput.jsx
-  const handleSongData = (data) => {
-    setSongData(data);
+  // Simulación de inicio de sesión exitoso
+  const handleLoginSuccess = () => {
+    setCurrentPage("home");
   };
 
-  // Alternar reproducción
-  const handleTogglePlay = () => {
-    setIsPlaying(!isPlaying);
+  // Simulación de registro exitoso
+  const handleSignUpSuccess = () => {
+    setCurrentPage("login"); // vuelve al login después del registro
   };
 
+  // Renderiza la vista según la ruta
   return (
     <div className="app-container">
-      {/* Encabezado principal */}
-      <Header />
+      {currentPage === "login" && (
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          goToSignUp={() => setCurrentPage("signup")}
+        />
+      )}
 
-      {/* Selector de idioma */}
-      <LanguageSelector
-        selectedLanguage={selectedLanguage}
-        onChange={setSelectedLanguage}
-      />
+      {currentPage === "signup" && (
+        <SignUp
+          onSignUpSuccess={handleSignUpSuccess}
+          goToLogin={() => setCurrentPage("login")}
+        />
+      )}
 
-      {/* Campo para pegar la URL y buscar canción */}
-      <UrlInput
-        onSongData={handleSongData}
-        selectedLanguage={selectedLanguage}
-      />
-
-      {/* Reproductor de música/video */}
-      <Player isPlaying={isPlaying} onTogglePlay={handleTogglePlay} />
-
-      {/* Muestra la letra original y traducida */}
-      <Lyrics songData={songData} />
-
-      {/* (Opcional) Componente de video, si lo usarás */}
-      <Video videoId={songData?.videoId} isPlaying={isPlaying} />
+      {currentPage === "home" && <Home />}
     </div>
   );
 }
