@@ -1,20 +1,24 @@
 import { useState } from "react";
+import MusicSearch from "../components/MusicSearch";
+import MusicPlayer from "../components/MusicPlayer";
 import "./Home.css";
 
 const Home = ({ user, onLogout }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSong, setSelectedSong] = useState(null);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Buscando:", searchQuery);
-    // Aquí implementarás la búsqueda de música
+  const handleSongSelect = (song) => {
+    setSelectedSong(song);
+  };
+
+  const handleClosePlayer = () => {
+    setSelectedSong(null);
   };
 
   return (
     <div className="home">
       <header className="home-header">
         <div className="logo">
-          <h1>🎵 Music App</h1>
+          <h1>🎵 Music Language</h1>
         </div>
         <div className="user-info">
           <span>👤 {user?.full_name || user?.email}</span>
@@ -27,43 +31,15 @@ const Home = ({ user, onLogout }) => {
       <div className="home-content">
         <div className="welcome-banner">
           <h2>Bienvenido, {user?.full_name || "Usuario"}</h2>
-          <p>Descubre y disfruta tu música favorita</p>
+          <p>Descubre y disfruta tu música favorita con traducción de letras</p>
         </div>
 
-        <div className="search-section">
-          <form onSubmit={handleSearch} className="search-form">
-            <input
-              type="text"
-              placeholder="Buscar canciones, artistas, álbumes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit">🔍 Buscar</button>
-          </form>
-        </div>
-
-        <div className="music-categories">
-          <h3>Categorías</h3>
-          <div className="categories-grid">
-            <div className="category-card">
-              <span className="category-icon">🎸</span>
-              <h4>Rock</h4>
-            </div>
-            <div className="category-card">
-              <span className="category-icon">🎤</span>
-              <h4>Pop</h4>
-            </div>
-            <div className="category-card">
-              <span className="category-icon">🎹</span>
-              <h4>Clásica</h4>
-            </div>
-            <div className="category-card">
-              <span className="category-icon">🎧</span>
-              <h4>Electrónica</h4>
-            </div>
-          </div>
-        </div>
+        <MusicSearch onSongSelect={handleSongSelect} />
       </div>
+
+      {selectedSong && (
+        <MusicPlayer song={selectedSong} onClose={handleClosePlayer} />
+      )}
     </div>
   );
 };
