@@ -2,6 +2,7 @@
 import axios from "axios";
 
 const API_URL = "http://127.0.0.1:8000/api/v1/music";
+const RECOMMENDATIONS_URL = "http://127.0.0.1:8000/api/v1/recommendations";
 
 // Obtener token de autenticación
 const getAuthHeaders = () => {
@@ -92,5 +93,47 @@ export const getTrendingMusic = async (language = null, limit = 20) => {
   } catch (error) {
     console.error("❌ Error al obtener trending:", error);
     throw error.response?.data || { detail: "Error al obtener trending" };
+  }
+};
+
+// --- OBTENER RECOMENDACIONES ---
+export const getRecommendations = async (genre = null, language = "es", limit = 20) => {
+  try {
+    const response = await axios.post(
+      `${RECOMMENDATIONS_URL}/`,
+      {
+        genre: genre,
+        language: language,
+        limit: limit,
+      },
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+
+    console.log("✅ Recomendaciones recibidas:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al obtener recomendaciones:", error);
+    throw error.response?.data || { detail: "Error al obtener recomendaciones" };
+  }
+};
+
+// --- OBTENER GÉNEROS DISPONIBLES ---
+export const getAvailableGenres = async () => {
+  try {
+    const response = await axios.get(`${RECOMMENDATIONS_URL}/genres`, {
+      headers: getAuthHeaders(),
+    });
+
+    return response.data.genres;
+  } catch (error) {
+    console.error("❌ Error al obtener géneros:", error);
+    // Géneros por defecto si falla
+    return [
+      "pop", "rock", "hip-hop", "reggaeton", "salsa", 
+      "bachata", "jazz", "classical", "electronic", 
+      "indie", "metal", "r-n-b", "country"
+    ];
   }
 };

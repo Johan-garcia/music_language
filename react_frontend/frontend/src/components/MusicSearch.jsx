@@ -101,8 +101,8 @@ const MusicSearch = ({ onSongSelect }) => {
                   <p className="song-artist">{song.artist}</p>
                   {song.duration && (
                     <span className="song-duration">
-                      {Math.floor(song.duration / 60)}:
-                      {(song.duration % 60).toString().padStart(2, "0")}
+                      {Math.floor(song.duration / 60000)}:
+                      {Math.floor((song.duration % 60000) / 1000).toString().padStart(2, "0")}
                     </span>
                   )}
                 </div>

@@ -1,0 +1,193 @@
+.recommendations {
+  padding: 30px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.recommendations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.recommendations-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #333;
+}
+
+.genre-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.genre-select {
+  padding: 10px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.3s;
+  min-width: 200px;
+}
+
+.genre-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.recommendations-loading {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.recommendations-loading .spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+.recommendations-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 15px 20px;
+  border-radius: 10px;
+  text-align: center;
+  border-left: 4px solid #c62828;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 25px;
+}
+
+.recommendation-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.recommendation-thumbnail {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+.recommendation-thumbnail img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-thumbnail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.recommendation-card:hover .play-overlay {
+  opacity: 1;
+}
+
+.play-icon {
+  color: white;
+  font-size: 3rem;
+  transform: scale(1);
+  transition: transform 0.3s;
+}
+
+.recommendation-card:hover .play-icon {
+  transform: scale(1.2);
+}
+
+.recommendation-info {
+  padding: 15px;
+}
+
+.recommendation-title {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommendation-artist {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recommendation-reason {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #999;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .recommendations-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .genre-select {
+    width: 100%;
+  }
+  
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+  }
+}
