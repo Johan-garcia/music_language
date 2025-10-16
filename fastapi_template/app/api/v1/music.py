@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import re
+import logging
 
 from app.database import get_db
 from app.models.models import Song, User
@@ -13,7 +15,52 @@ from app.services.spotify_service import spotify_service
 from app.services.lyrics_service import lyrics_service
 from app.api.v1.auth import get_current_user
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# 🆕 FUNCIONES AUXILIARES PARA LIMPIAR TÍTULOS
+def clean_title_for_lyrics(title: str) -> str:
+    """Limpiar título para búsqueda de letras"""
+    cleaned = title
+    
+    # Remover texto entre paréntesis y corchetes
+    cleaned = re.sub(r'\([^)]*\)', '', cleaned)
+    cleaned = re.sub(r'\[[^\]]*\]', '', cleaned)
+    
+    # Remover palabras comunes de videos
+    unwanted = [
+        'official video', 'official music video', 'official audio',
+        'video oficial', 'music video', 'lyric video', 'lyrics',
+        'audio oficial', 'videoclip', 'ft.', 'feat.', 'featuring'
+    ]
+    
+    for word in unwanted:
+        cleaned = re.sub(f'\\b{word}\\b', '', cleaned, flags=re.IGNORECASE)
+    
+    # Remover &amp; y caracteres HTML
+    cleaned = cleaned.replace('&amp;', '&')
+    cleaned = re.sub(r'[|]', '', cleaned)
+    
+    # Limpiar espacios múltiples
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    
+    return cleaned.strip()
+
+def clean_artist_name(artist: str) -> str:
+    """Limpiar nombre de artista"""
+    cleaned = artist
+    
+    # Remover "VEVO" y variantes
+    cleaned = re.sub(r'\bVEVO\b', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\bOfficial\b', '', cleaned, flags=re.IGNORECASE)
+    
+    # Si tiene " - Topic", removerlo
+    cleaned = re.sub(r'\s*-\s*Topic$', '', cleaned)
+    
+    # Limpiar espacios
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    
+    return cleaned.strip()
 
 @router.post("/search", response_model=MusicSearchResult)
 async def search_music(
@@ -149,20 +196,30 @@ async def get_song_lyrics(
         raise HTTPException(status_code=404, detail="Song not found")
     
     # Check if lyrics already cached
-    if song.lyrics:
+    if song.lyrics and len(song.lyrics) > 50 and "no disponibles" not in song.lyrics.lower():
+        logger.info(f"✅ Usando letras en caché para: {song.title}")
         return LyricsResponse(
             song_id=song_id,
             lyrics=song.lyrics,
             source="cached"
         )
     
-    # Fetch lyrics from free lyrics service (replaces Genius)
-    lyrics = await lyrics_service.get_lyrics(song.title, song.artist)
+    # 🆕 LIMPIAR TÍTULO Y ARTISTA ANTES DE BUSCAR
+    clean_title = clean_title_for_lyrics(song.title)
+    clean_artist = clean_artist_name(song.artist)
     
-    if lyrics:
+    logger.info(f"🎵 Buscando letras:")
+    logger.info(f"   Original: '{song.title}' by '{song.artist}'")
+    logger.info(f"   Limpio: '{clean_title}' by '{clean_artist}'")
+    
+    # Fetch lyrics from free lyrics service
+    lyrics = await lyrics_service.get_lyrics(clean_title, clean_artist)
+    
+    if lyrics and len(lyrics) > 50:
         # Cache lyrics in database
         song.lyrics = lyrics
         db.commit()
+        logger.info(f"✅ Letras guardadas en caché")
         
         return LyricsResponse(
             song_id=song_id,
@@ -170,7 +227,11 @@ async def get_song_lyrics(
             source="free_service"
         )
     else:
-        raise HTTPException(status_code=404, detail="Lyrics not found")
+        logger.warning(f"⚠️ No se encontraron letras")
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Letras no disponibles para '{clean_title}' de {clean_artist}"
+        )
 
 @router.get("/song/{song_id}", response_model=SongSchema)
 async def get_song_details(

@@ -393,6 +393,36 @@
   flex-shrink: 0;
 }
 
+/* Mensaje cuando no hay letras */
+.no-lyrics-message {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 60px 20px;
+}
+
+.no-lyrics-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.4;
+}
+
+.no-lyrics-message p {
+  font-size: 1.2rem;
+  margin: 10px 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.no-lyrics-message small {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .video-container-centered {

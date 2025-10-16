@@ -1,27 +1,22 @@
-// src/services/translationService.js
 import axios from "axios";
 
+// Usar solo MyMemory API (más estable)
 const TRANSLATION_API = "https://api.mymemory.translated.net/get";
 
-/**
- * Detecta el idioma del texto y traduce al idioma objetivo
- */
 export const translateText = async (text, targetLang = "es") => {
   try {
     console.log("🌍 Iniciando traducción...");
     
-    // Detectar el idioma del texto original
     const sourceLang = detectLanguageFromText(text);
     console.log(`📝 Idioma detectado: ${sourceLang} → Traduciendo a: ${targetLang}`);
 
-    // Si el idioma origen es el mismo que el destino, no traducir
     if (sourceLang === targetLang) {
       console.log("⚠️ El texto ya está en el idioma objetivo");
       return text;
     }
 
-    // Dividir el texto en fragmentos más pequeños (API tiene límite)
-    const maxLength = 450; // Reducido para mayor compatibilidad
+    // Dividir en fragmentos más pequeños
+    const maxLength = 400;
     const lines = text.split('\n');
     const chunks = [];
     let currentChunk = '';
@@ -41,31 +36,29 @@ export const translateText = async (text, targetLang = "es") => {
     // Traducir cada fragmento
     const translatedChunks = [];
     for (let i = 0; i < chunks.length; i++) {
-      console.log(`📝 Traduciendo fragmento ${i + 1}/${chunks.length}...`);
+      console.log(` Traduciendo fragmento ${i + 1}/${chunks.length}...`);
       try {
         const translated = await translateChunk(chunks[i], sourceLang, targetLang);
         translatedChunks.push(translated);
-        // Pequeña pausa para evitar rate limiting
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Pausa entre peticiones
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (err) {
-        console.error(`❌ Error en fragmento ${i + 1}:`, err);
+        console.error(` Error en fragmento ${i + 1}:`, err);
         translatedChunks.push(chunks[i]); // Mantener original si falla
       }
     }
 
     const result = translatedChunks.join('\n\n');
-    console.log("✅ Traducción completada");
+    console.log("Traducción completada");
     return result;
 
   } catch (error) {
-    console.error("❌ Error al traducir:", error);
+    console.error(" Error al traducir:", error);
     throw new Error("Error en la traducción");
   }
 };
 
-/**
- * Traduce un fragmento de texto
- */
+
 const translateChunk = async (text, sourceLang, targetLang) => {
   try {
     const langPair = `${sourceLang}|${targetLang}`;
@@ -75,101 +68,49 @@ const translateChunk = async (text, sourceLang, targetLang) => {
         q: text,
         langpair: langPair,
       },
-      timeout: 10000, // 10 segundos timeout
+      timeout: 10000,
     });
 
     if (response.data && response.data.responseData) {
       const translated = response.data.responseData.translatedText;
-      
-      // Verificar si la traducción fue exitosa
       if (translated && translated !== text) {
         return translated;
       }
     }
 
-    // Si no hay traducción válida, intentar con API alternativa
     return await translateWithLibreTranslate(text, sourceLang, targetLang);
 
   } catch (error) {
-    console.error("Error en traducción de fragmento:", error);
-    // Intentar API alternativa
-    try {
+    // Si es error 429 (rate limit), esperar más tiempo
+    if (error.response?.status === 429) {
+      console.warn("⏳ Rate limit alcanzado, esperando 2 segundos...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Intentar de nuevo con LibreTranslate
       return await translateWithLibreTranslate(text, sourceLang, targetLang);
-    } catch (err) {
-      return text; // Devolver texto original si todo falla
     }
+    
+    console.error("Error en traducción de fragmento:", error);
+    return text; // Devolver original si falla
   }
 };
 
-/**
- * API alternativa de traducción (LibreTranslate - instancia pública)
- */
-const translateWithLibreTranslate = async (text, sourceLang, targetLang) => {
-  try {
-    const response = await axios.post(
-      "https://libretranslate.de/translate",
-      {
-        q: text,
-        source: sourceLang,
-        target: targetLang,
-        format: "text"
-      },
-      {
-        headers: {
-          "Content-Type": "application/json"
-        },
-        timeout: 10000
-      }
-    );
+// Y aumenta el delay en el loop principal:
+await new Promise(resolve => setTimeout(resolve, 800)); // De 300ms a 800ms
 
-    if (response.data && response.data.translatedText) {
-      return response.data.translatedText;
-    }
-
-    throw new Error("No se recibió traducción de LibreTranslate");
-  } catch (error) {
-    console.error("Error con LibreTranslate:", error);
-    throw error;
-  }
-};
-
-/**
- * Detecta el idioma del texto basándose en palabras clave y patrones
- */
 const detectLanguageFromText = (text) => {
   const lowerText = text.toLowerCase();
   
-  // Palabras clave en español
-  const spanishKeywords = [
-    'que', 'para', 'con', 'por', 'una', 'de', 'la', 'el', 'los', 'las',
-    'yo', 'tu', 'él', 'ella', 'nosotros', 'amor', 'corazón', 'vida',
-    'cuando', 'donde', 'porque', 'como', 'desde', 'hasta'
-  ];
-  
-  // Palabras clave en inglés
-  const englishKeywords = [
-    'the', 'and', 'you', 'that', 'was', 'for', 'are', 'with', 'his',
-    'they', 'one', 'have', 'this', 'from', 'love', 'heart', 'baby',
-    'when', 'where', 'what', 'how', 'like', 'just', 'know'
-  ];
-  
-  // Palabras clave en portugués
-  const portugueseKeywords = [
-    'que', 'para', 'com', 'uma', 'você', 'seu', 'ela', 'mais',
-    'quando', 'onde', 'porque', 'como', 'desde', 'até', 'amor'
-  ];
-  
-  // Palabras clave en francés
-  const frenchKeywords = [
-    'que', 'pour', 'avec', 'une', 'dans', 'est', 'pas', 'vous',
-    'amour', 'coeur', 'quand', 'où', 'comment', 'comme'
-  ];
+  const spanishKeywords = ['que', 'para', 'con', 'por', 'una', 'de', 'la', 'el', 'los', 'amor', 'corazón', 'cuando', 'donde'];
+  const englishKeywords = ['the', 'and', 'you', 'that', 'was', 'for', 'are', 'with', 'love', 'heart', 'when', 'where'];
+  const portugueseKeywords = ['que', 'para', 'com', 'uma', 'você', 'seu', 'ela', 'mais', 'quando', 'onde', 'amor'];
+  const frenchKeywords = ['que', 'pour', 'avec', 'une', 'dans', 'est', 'pas', 'vous', 'amour', 'quand', 'où'];
+  const dutchKeywords = ['kom', 'bij', 'ik', 'van', 'wat', 'het', 'een', 'is', 'dat', 'op', 'voor', 'je'];
 
-  // Contar coincidencias
   let spanishCount = 0;
   let englishCount = 0;
   let portugueseCount = 0;
   let frenchCount = 0;
+  let dutchCount = 0;
 
   spanishKeywords.forEach(word => {
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -191,30 +132,30 @@ const detectLanguageFromText = (text) => {
     frenchCount += (lowerText.match(regex) || []).length;
   });
 
-  // Determinar el idioma con más coincidencias
+  dutchKeywords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    dutchCount += (lowerText.match(regex) || []).length;
+  });
+
   const scores = [
     { lang: 'en', score: englishCount },
     { lang: 'es', score: spanishCount },
     { lang: 'pt', score: portugueseCount },
-    { lang: 'fr', score: frenchCount }
+    { lang: 'fr', score: frenchCount },
+    { lang: 'nl', score: dutchCount }
   ];
 
   scores.sort((a, b) => b.score - a.score);
 
   console.log("📊 Puntuaciones de detección:", scores);
 
-  // Si el inglés tiene más coincidencias, es inglés
   if (scores[0].score > 0) {
     return scores[0].lang;
   }
 
-  // Por defecto, asumir inglés (mayoría de canciones)
   return 'en';
 };
 
-/**
- * Obtiene el nombre completo del idioma
- */
 export const getLanguageName = (code) => {
   const languages = {
     'en': 'Inglés',
@@ -223,9 +164,7 @@ export const getLanguageName = (code) => {
     'fr': 'Francés',
     'de': 'Alemán',
     'it': 'Italiano',
-    'ja': 'Japonés',
-    'ko': 'Coreano',
-    'zh': 'Chino'
+    'nl': 'Holandés'
   };
   return languages[code] || code.toUpperCase();
 };

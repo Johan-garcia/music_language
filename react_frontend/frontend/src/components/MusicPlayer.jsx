@@ -22,13 +22,19 @@ const MusicPlayer = ({ song, onClose }) => {
     }
   }, [song]);
 
+  // Auto-traducir cuando las letras estén cargadas
+  useEffect(() => {
+    if (lyrics && !translatedLyrics && targetLanguage) {
+      loadTranslation(targetLanguage);
+    }
+  }, [lyrics]);
+
   const loadStreamingUrl = async () => {
     setLoadingVideo(true);
     setError("");
     
     try {
       if (song.youtube_id && isValidYouTubeId(song.youtube_id)) {
-        console.log("✅ YouTube ID encontrado:", song.youtube_id);
         setStreamingUrl(song.youtube_id);
         setLoadingVideo(false);
         return;
@@ -39,7 +45,6 @@ const MusicPlayer = ({ song, onClose }) => {
       if (response.youtube_url) {
         const videoId = extractYouTubeId(response.youtube_url);
         if (videoId) {
-          console.log("✅ ID obtenido del backend:", videoId);
           setStreamingUrl(videoId);
           setLoadingVideo(false);
           return;
@@ -50,7 +55,7 @@ const MusicPlayer = ({ song, onClose }) => {
       
     } catch (err) {
       console.error("❌ Error al cargar video:", err);
-      setError(`No se pudo cargar el video: ${err.message}`);
+      setError(`No se pudo cargar el video`);
     } finally {
       setLoadingVideo(false);
     }
@@ -83,11 +88,39 @@ const MusicPlayer = ({ song, onClose }) => {
   };
 
   const cleanLyricsText = (text) => {
-    let cleaned = text.replace(/🎵.*?\n\n/g, '');
-    cleaned = cleaned.replace(/\[Source:.*?\]/g, '');
-    cleaned = cleaned.replace(/\(Thanks to.*?\)/g, '');
+    console.log("🧹 Limpiando letras...");
+    console.log("📝 Texto original (primeros 200 chars):", text.substring(0, 200));
+    
+    let cleaned = text;
+    
+    // Remover encabezado de canción con emoji
+    cleaned = cleaned.replace(/🎵\s*.*?\n\n/g, '');
+    
+    // Remover líneas de "Contributors"
+    cleaned = cleaned.replace(/\d+\s+Contributors?\n/gi, '');
+    
+    // Remover título de letra (ej: "Alles Wat Ik Weet Lyrics")
+    cleaned = cleaned.replace(/^.*?\s+Lyrics\n/i, '');
+    
+    // Remover songtekst van
+    cleaned = cleaned.replace(/\[Songtekst van.*?\]\n/gi, '');
+    
+    // Remover metadata entre corchetes al inicio
+    cleaned = cleaned.replace(/^\[.*?\]\n/gm, '');
+    
+    // Remover fuentes
+    cleaned = cleaned.replace(/\[Source:.*?\]/gi, '');
+    cleaned = cleaned.replace(/\(Thanks to.*?\)/gi, '');
+    
+    // Remover líneas vacías múltiples
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-    return cleaned.trim();
+    
+    // Remover espacios al inicio y final
+    cleaned = cleaned.trim();
+    
+    console.log("✅ Texto limpio (primeros 200 chars):", cleaned.substring(0, 200));
+    
+    return cleaned;
   };
 
   const loadLyrics = async () => {
@@ -99,21 +132,33 @@ const MusicPlayer = ({ song, onClose }) => {
       
       if (response.lyrics) {
         const cleaned = cleanLyricsText(response.lyrics);
-        setLyrics(cleaned);
-        setShowLyrics(true);
-        console.log("✅ Letras cargadas");
+        
+        // Verificar que tenga contenido después de limpiar
+        if (cleaned && cleaned.length > 20) {
+          setLyrics(cleaned);
+          setShowLyrics(true);
+          console.log("✅ Letras cargadas y limpias");
+        } else {
+          throw new Error("Las letras están vacías después de limpiar");
+        }
       } else {
-        setError("Letras no disponibles");
+        throw new Error("No hay letras disponibles");
       }
     } catch (err) {
       console.error("❌ Error al cargar letras:", err);
-      setError("Letras no disponibles");
+      setError("Letras no disponibles para esta canción");
+      setLyrics(""); // Limpiar letras si hay error
     } finally {
       setLoadingLyrics(false);
     }
   };
 
   const loadTranslation = async (lang) => {
+    if (!lyrics) {
+      console.log("⚠️ No hay letras para traducir");
+      return;
+    }
+
     setTargetLanguage(lang);
     setLoadingTranslation(true);
     setError("");
@@ -121,11 +166,16 @@ const MusicPlayer = ({ song, onClose }) => {
     try {
       console.log(`🌍 Traduciendo a: ${lang}`);
       const translated = await translateText(lyrics, lang);
-      setTranslatedLyrics(translated);
-      console.log("✅ Traducción completada");
+      
+      if (translated && translated.length > 20) {
+        setTranslatedLyrics(translated);
+        console.log("✅ Traducción completada");
+      } else {
+        throw new Error("Traducción vacía o muy corta");
+      }
     } catch (err) {
       console.error("❌ Error al traducir:", err);
-      setTranslatedLyrics("❌ No se pudo traducir las letras.");
+      setTranslatedLyrics("❌ No se pudo traducir las letras.\n\nIntenta seleccionar otro idioma.");
     } finally {
       setLoadingTranslation(false);
     }
@@ -134,7 +184,10 @@ const MusicPlayer = ({ song, onClose }) => {
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     if (newLang && lyrics) {
+      setTranslatedLyrics(""); // Limpiar traducción anterior
       loadTranslation(newLang);
+    } else if (!newLang) {
+      setTranslatedLyrics(""); // Limpiar si se deselecciona
     }
   };
 
@@ -148,7 +201,6 @@ const MusicPlayer = ({ song, onClose }) => {
     <div className="music-player-overlay fullscreen">
       <div className="music-player-fullscreen">
         
-        {/* Header con controles */}
         <header className="player-fullscreen-header">
           <div className="song-info-header">
             <div className="song-thumbnail-mini">
@@ -171,15 +223,12 @@ const MusicPlayer = ({ song, onClose }) => {
               onChange={handleLanguageChange}
               disabled={!lyrics || loadingTranslation}
             >
-              <option value="">Selecciona idioma para traducir</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="en">🇺🇸 English</option>
-              <option value="pt">🇧🇷 Português</option>
-              <option value="fr">🇫🇷 Français</option>
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="it">🇮🇹 Italiano</option>
-              <option value="ja">🇯🇵 日本語</option>
-              <option value="ko">🇰🇷 한국어</option>
+              <option value="es">🇪🇸 Traducir a Español</option>
+              <option value="en">🇺🇸 Translate to English</option>
+              <option value="pt">🇧🇷 Traduzir para Português</option>
+              <option value="fr">🇫🇷 Traduire en Français</option>
+              <option value="de">🇩🇪 Übersetzen auf Deutsch</option>
+              <option value="it">🇮🇹 Traduci in Italiano</option>
             </select>
 
             <button className="close-fullscreen-btn" onClick={onClose}>
@@ -188,7 +237,6 @@ const MusicPlayer = ({ song, onClose }) => {
           </div>
         </header>
 
-        {/* Video centrado */}
         <div className="video-section-centered">
           {loadingVideo ? (
             <div className="video-loading-centered">
@@ -212,10 +260,8 @@ const MusicPlayer = ({ song, onClose }) => {
           )}
         </div>
 
-        {/* Contenido principal: Letras lado a lado */}
         <div className="player-fullscreen-content">
           
-          {/* Columna Izquierda: Letra Original */}
           <div className="lyrics-column left-column">
             <div className="lyrics-section-fullscreen">
               <h3>📝 Letra Original</h3>
@@ -233,12 +279,15 @@ const MusicPlayer = ({ song, onClose }) => {
                   ))}
                 </div>
               ) : (
-                <p className="no-lyrics">Letras no disponibles</p>
+                <div className="no-lyrics-message">
+                  <p className="no-lyrics-icon">📝</p>
+                  <p>Letras no disponibles</p>
+                  <small>Intenta con otra canción</small>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Columna Derecha: Letra Traducida */}
           <div className="lyrics-column right-column">
             <div className="lyrics-section-fullscreen">
               <h3>
@@ -246,12 +295,7 @@ const MusicPlayer = ({ song, onClose }) => {
                 {targetLanguage && ` (${getLanguageName(targetLanguage)})`}
               </h3>
               
-              {!targetLanguage || targetLanguage === "" ? (
-                <div className="select-language-prompt">
-                  <div className="prompt-icon">🌐</div>
-                  <p>Selecciona un idioma arriba para ver la traducción</p>
-                </div>
-              ) : loadingTranslation ? (
+              {loadingTranslation ? (
                 <div className="lyrics-loading">
                   <div className="spinner-small"></div>
                   <p>Traduciendo a {getLanguageName(targetLanguage)}...</p>
@@ -264,14 +308,22 @@ const MusicPlayer = ({ song, onClose }) => {
                     </p>
                   ))}
                 </div>
+              ) : lyrics && !loadingLyrics ? (
+                <div className="select-language-prompt">
+                  <div className="prompt-icon">🌐</div>
+                  <p>Traduciendo automáticamente...</p>
+                </div>
               ) : (
-                <p className="no-lyrics">Traducción no disponible</p>
+                <div className="no-lyrics-message">
+                  <p className="no-lyrics-icon">🌍</p>
+                  <p>Traducción no disponible</p>
+                  <small>Primero deben cargarse las letras originales</small>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Footer con errores si los hay */}
         {error && (
           <div className="player-error-footer">{error}</div>
         )}
@@ -280,7 +332,6 @@ const MusicPlayer = ({ song, onClose }) => {
   );
 };
 
-// Función auxiliar para nombres de idiomas
 const getLanguageName = (code) => {
   const languages = {
     'es': 'Español',
@@ -289,9 +340,6 @@ const getLanguageName = (code) => {
     'fr': 'Français',
     'de': 'Deutsch',
     'it': 'Italiano',
-    'ja': '日本語',
-    'ko': '한국어',
-    'zh': '中文'
   };
   return languages[code] || code.toUpperCase();
 };
