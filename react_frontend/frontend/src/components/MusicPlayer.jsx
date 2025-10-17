@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getStreamingUrl, getLyrics } from "../services/musicService";
 import { translateText } from "../services/translationService";
 import "./MusicPlayer.css";
@@ -14,6 +14,11 @@ const MusicPlayer = ({ song, onClose }) => {
   const [error, setError] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("es");
 
+  // Referencias para los contenedores de letras
+  const originalLyricsRef = useRef(null);
+  const translatedLyricsRef = useRef(null);
+  const isSyncingRef = useRef(false); // Para evitar loops infinitos
+
   useEffect(() => {
     if (song) {
       console.log("🎵 Canción seleccionada:", song.title, "-", song.artist);
@@ -22,12 +27,52 @@ const MusicPlayer = ({ song, onClose }) => {
     }
   }, [song]);
 
-  // Auto-traducir cuando las letras estén cargadas
   useEffect(() => {
     if (lyrics && !translatedLyrics && targetLanguage) {
       loadTranslation(targetLanguage);
     }
   }, [lyrics]);
+
+  // Función para sincronizar el scroll
+  const handleOriginalScroll = (e) => {
+    if (isSyncingRef.current) return;
+    
+    const source = e.target;
+    const target = translatedLyricsRef.current;
+    
+    if (!target) return;
+    
+    isSyncingRef.current = true;
+    
+    const scrollPercentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+    const targetScrollTop = scrollPercentage * (target.scrollHeight - target.clientHeight);
+    
+    target.scrollTop = targetScrollTop;
+    
+    requestAnimationFrame(() => {
+      isSyncingRef.current = false;
+    });
+  };
+
+  const handleTranslatedScroll = (e) => {
+    if (isSyncingRef.current) return;
+    
+    const source = e.target;
+    const target = originalLyricsRef.current;
+    
+    if (!target) return;
+    
+    isSyncingRef.current = true;
+    
+    const scrollPercentage = source.scrollTop / (source.scrollHeight - source.clientHeight);
+    const targetScrollTop = scrollPercentage * (target.scrollHeight - target.clientHeight);
+    
+    target.scrollTop = targetScrollTop;
+    
+    requestAnimationFrame(() => {
+      isSyncingRef.current = false;
+    });
+  };
 
   const loadStreamingUrl = async () => {
     setLoadingVideo(true);
@@ -89,37 +134,19 @@ const MusicPlayer = ({ song, onClose }) => {
 
   const cleanLyricsText = (text) => {
     console.log("🧹 Limpiando letras...");
-    console.log("📝 Texto original (primeros 200 chars):", text.substring(0, 200));
     
     let cleaned = text;
-    
-    // Remover encabezado de canción con emoji
     cleaned = cleaned.replace(/🎵\s*.*?\n\n/g, '');
-    
-    // Remover líneas de "Contributors"
     cleaned = cleaned.replace(/\d+\s+Contributors?\n/gi, '');
-    
-    // Remover título de letra (ej: "Alles Wat Ik Weet Lyrics")
     cleaned = cleaned.replace(/^.*?\s+Lyrics\n/i, '');
-    
-    // Remover songtekst van
     cleaned = cleaned.replace(/\[Songtekst van.*?\]\n/gi, '');
-    
-    // Remover metadata entre corchetes al inicio
     cleaned = cleaned.replace(/^\[.*?\]\n/gm, '');
-    
-    // Remover fuentes
     cleaned = cleaned.replace(/\[Source:.*?\]/gi, '');
     cleaned = cleaned.replace(/\(Thanks to.*?\)/gi, '');
-    
-    // Remover líneas vacías múltiples
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-    
-    // Remover espacios al inicio y final
     cleaned = cleaned.trim();
     
-    console.log("✅ Texto limpio (primeros 200 chars):", cleaned.substring(0, 200));
-    
+    console.log("✅ Texto limpio");
     return cleaned;
   };
 
@@ -133,7 +160,6 @@ const MusicPlayer = ({ song, onClose }) => {
       if (response.lyrics) {
         const cleaned = cleanLyricsText(response.lyrics);
         
-        // Verificar que tenga contenido después de limpiar
         if (cleaned && cleaned.length > 20) {
           setLyrics(cleaned);
           setShowLyrics(true);
@@ -147,7 +173,7 @@ const MusicPlayer = ({ song, onClose }) => {
     } catch (err) {
       console.error("❌ Error al cargar letras:", err);
       setError("Letras no disponibles para esta canción");
-      setLyrics(""); // Limpiar letras si hay error
+      setLyrics("");
     } finally {
       setLoadingLyrics(false);
     }
@@ -184,10 +210,10 @@ const MusicPlayer = ({ song, onClose }) => {
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
     if (newLang && lyrics) {
-      setTranslatedLyrics(""); // Limpiar traducción anterior
+      setTranslatedLyrics("");
       loadTranslation(newLang);
     } else if (!newLang) {
-      setTranslatedLyrics(""); // Limpiar si se deselecciona
+      setTranslatedLyrics("");
     }
   };
 
@@ -271,7 +297,11 @@ const MusicPlayer = ({ song, onClose }) => {
                   <p>Cargando letras...</p>
                 </div>
               ) : lyrics ? (
-                <div className="lyrics-text-fullscreen">
+                <div 
+                  className="lyrics-text-fullscreen"
+                  ref={originalLyricsRef}
+                  onScroll={handleOriginalScroll}
+                >
                   {lyrics.split('\n').map((line, index) => (
                     <p key={`original-${index}`} className="lyric-line">
                       {line.trim() || '\u00A0'}
@@ -301,7 +331,11 @@ const MusicPlayer = ({ song, onClose }) => {
                   <p>Traduciendo a {getLanguageName(targetLanguage)}...</p>
                 </div>
               ) : translatedLyrics ? (
-                <div className="lyrics-text-fullscreen">
+                <div 
+                  className="lyrics-text-fullscreen"
+                  ref={translatedLyricsRef}
+                  onScroll={handleTranslatedScroll}
+                >
                   {translatedLyrics.split('\n').map((line, index) => (
                     <p key={`translated-${index}`} className="lyric-line">
                       {line.trim() || '\u00A0'}

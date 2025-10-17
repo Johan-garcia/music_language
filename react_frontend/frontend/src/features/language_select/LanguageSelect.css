@@ -4,6 +4,22 @@
 }
 
 .language-select select {
-  padding: 6px;
+  padding: 8px 12px;
   border-radius: 5px;
+  background: #282828;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.language-select select:focus {
+  outline: none;
+  border-color: #1DB954;
+}
+
+.language-select select option {
+  background: #282828;
+  color: white;
 }

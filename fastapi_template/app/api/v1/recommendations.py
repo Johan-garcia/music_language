@@ -177,7 +177,7 @@ async def initialize_recommendations(
     }
     
     queries = popular_queries.get(language, popular_queries['es'])
-    new_songs_count = 10
+    new_songs_count = 0
     
     for query in queries:
         try:

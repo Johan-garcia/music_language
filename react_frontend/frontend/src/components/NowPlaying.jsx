@@ -1,78 +1,69 @@
 import { useState, useEffect, useRef } from "react";
 import { getLyrics } from "../services/musicService";
-import { translateText } from "../services/translationService";
 import "./NowPlaying.css";
 
-const NowPlaying = ({ song, onClose, targetLanguage = "es" }) => {
-  const audioRef = useRef(null);
+const NowPlaying = ({ song, onClose }) => {
+  const [lyrics, setLyrics] = useState({ original: "", translated: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
-  const [originalLyrics, setOriginalLyrics] = useState("");
-  const [translatedLyrics, setTranslatedLyrics] = useState("");
-  const [loadingLyrics, setLoadingLyrics] = useState(false);
-  const [loadingTranslation, setLoadingTranslation] = useState(false);
-  const [error, setError] = useState("");
-  const [audioUrl, setAudioUrl] = useState("");
+
+  const audioRef = useRef(null);
+  const originalLyricsRef = useRef(null);
+  const translatedLyricsRef = useRef(null);
+  const isSyncing = useRef(false);
 
   useEffect(() => {
     if (song) {
-      loadAudioUrl();
-      loadLyricsData();
+      loadLyrics();
     }
   }, [song]);
 
-  const loadAudioUrl = () => {
-    // Construir URL de audio desde YouTube
-    if (song.youtube_id) {
-      // Usaremos un iframe de YouTube en modo audio
-      setAudioUrl(`https://www.youtube.com/embed/${song.youtube_id}?autoplay=1&controls=0&enablejsapi=1`);
-    } else {
-      setError("No hay audio disponible para esta canción");
+  // Sincronización del scroll entre las dos columnas de letras
+  const handleScroll = (sourceRef, targetRef) => {
+    if (isSyncing.current) return;
+
+    isSyncing.current = true;
+
+    if (sourceRef.current && targetRef.current) {
+      const scrollPercentage =
+        sourceRef.current.scrollTop /
+        (sourceRef.current.scrollHeight - sourceRef.current.clientHeight);
+
+      targetRef.current.scrollTop =
+        scrollPercentage *
+        (targetRef.current.scrollHeight - targetRef.current.clientHeight);
     }
+
+    requestAnimationFrame(() => {
+      isSyncing.current = false;
+    });
   };
 
-  const loadLyricsData = async () => {
-    setLoadingLyrics(true);
+  const loadLyrics = async () => {
+    setLoading(true);
     setError("");
 
     try {
-      const response = await getLyrics(song.id);
-      const lyrics = response.lyrics;
-      
-      // Limpiar las letras (remover metadata)
-      const cleanedLyrics = cleanLyricsText(lyrics);
-      setOriginalLyrics(cleanedLyrics);
+      const response = await getLyrics(
+        song.id,
+        song.language || "es",
+        "en"
+      );
 
-      // Traducir letras
-      setLoadingTranslation(true);
-      try {
-        const translated = await translateText(cleanedLyrics, targetLanguage);
-        setTranslatedLyrics(translated);
-      } catch (err) {
-        console.error("Error al traducir:", err);
-        setTranslatedLyrics("Traducción no disponible");
-      } finally {
-        setLoadingTranslation(false);
-      }
-
+      setLyrics({
+        original: response.original_lyrics || "Letras no disponibles",
+        translated: response.translated_lyrics || "Traducción no disponible",
+      });
     } catch (err) {
       console.error("Error al cargar letras:", err);
-      setError("Letras no disponibles para esta canción");
+      setError("No se pudieron cargar las letras");
     } finally {
-      setLoadingLyrics(false);
+      setLoading(false);
     }
-  };
-
-  const cleanLyricsText = (text) => {
-    // Remover encabezados como "🎵 Song by Artist"
-    let cleaned = text.replace(/🎵.*?\n\n/g, '');
-    // Remover fuentes como "[Source: ...]"
-    cleaned = cleaned.replace(/\[Source:.*?\]/g, '');
-    // Remover líneas de metadata
-    cleaned = cleaned.replace(/\(Thanks to.*?\)/g, '');
-    return cleaned.trim();
   };
 
   const togglePlayPause = () => {
@@ -98,11 +89,11 @@ const NowPlaying = ({ song, onClose, targetLanguage = "es" }) => {
     }
   };
 
-  const handleSeek = (e) => {
-    const seekTime = parseFloat(e.target.value);
+  const handleProgressChange = (e) => {
+    const newTime = parseFloat(e.target.value);
     if (audioRef.current) {
-      audioRef.current.currentTime = seekTime;
-      setCurrentTime(seekTime);
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
     }
   };
 
@@ -114,18 +105,19 @@ const NowPlaying = ({ song, onClose, targetLanguage = "es" }) => {
     }
   };
 
-  const formatTime = (seconds) => {
-    if (isNaN(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (time) => {
+    if (isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
+
+  if (!song) return null;
 
   return (
     <div className="now-playing">
       <div className="now-playing-container">
-        
-        {/* Header con info de la canción */}
+        {/* Header con información de la canción */}
         <div className="song-header">
           <div className="song-artwork">
             {song.thumbnail_url ? (
@@ -138,123 +130,126 @@ const NowPlaying = ({ song, onClose, targetLanguage = "es" }) => {
             <h2>{song.title}</h2>
             <p>{song.artist}</p>
           </div>
-          <button className="close-player-btn" onClick={onClose}>
+          <button onClick={onClose} className="close-player-btn">
             ✕
           </button>
         </div>
 
         {/* Reproductor de audio */}
-        <div className="audio-player">
-          {song.youtube_id ? (
-            <>
-              {/* Iframe oculto de YouTube para reproducir audio */}
-              <iframe
-                ref={audioRef}
-                style={{ display: 'none' }}
-                src={audioUrl}
-                allow="autoplay"
-              />
-              
-              {/* Controles personalizados */}
-              <div className="player-controls">
-                <button className="control-btn play-btn" onClick={togglePlayPause}>
-                  {isPlaying ? "⏸️" : "▶️"}
-                </button>
+        {song.audio_url ? (
+          <div className="audio-player">
+            <audio
+              ref={audioRef}
+              src={song.audio_url}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+              onEnded={() => setIsPlaying(false)}
+            />
 
-                <div className="progress-container">
-                  <span className="time-display">{formatTime(currentTime)}</span>
-                  <input
-                    type="range"
-                    className="progress-bar"
-                    min="0"
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={handleSeek}
-                  />
-                  <span className="time-display">{formatTime(duration)}</span>
-                </div>
+            <div className="player-controls">
+              <button onClick={togglePlayPause} className="control-btn">
+                {isPlaying ? "⏸" : "▶"}
+              </button>
 
-                <div className="volume-control">
-                  <span>🔊</span>
-                  <input
-                    type="range"
-                    className="volume-slider"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                  />
-                </div>
+              <div className="progress-container">
+                <span className="time-display">{formatTime(currentTime)}</span>
+                <input
+                  type="range"
+                  min="0"
+                  max={duration || 0}
+                  value={currentTime}
+                  onChange={handleProgressChange}
+                  className="progress-bar"
+                />
+                <span className="time-display">{formatTime(duration)}</span>
               </div>
 
-              {/* Nota: El iframe de YouTube no permite control directo, 
-                  usaremos un reproductor alternativo */}
-              <div className="audio-note">
-                <p>⚠️ Nota: Reproduciendo desde YouTube. Usa los controles del reproductor integrado.</p>
-                <iframe
-                  width="100%"
-                  height="80"
-                  src={`https://www.youtube.com/embed/${song.youtube_id}?autoplay=1`}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ borderRadius: '10px', marginTop: '10px' }}
-                ></iframe>
+              <div className="volume-control">
+                <span>🔊</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="volume-slider"
+                />
               </div>
-            </>
-          ) : (
-            <div className="no-audio">
-              <p>⚠️ Audio no disponible para esta canción</p>
             </div>
-          )}
-        </div>
 
-        {/* Sección de letras */}
+            <div className="audio-note">
+              <p>
+                <strong>Nota:</strong> El audio puede no estar disponible para
+                todas las canciones
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="no-audio">
+            <p>Audio no disponible para esta canción</p>
+          </div>
+        )}
+
+        {/* Sección de letras sincronizadas */}
         <div className="lyrics-section">
           <div className="lyrics-column">
-            <h3>📝 Letra Original</h3>
-            {loadingLyrics ? (
+            <h3>🎵 Letra Original ({song.language?.toUpperCase() || "ES"})</h3>
+            {loading ? (
               <div className="lyrics-loading">
                 <div className="spinner"></div>
                 <p>Cargando letras...</p>
               </div>
-            ) : originalLyrics ? (
-              <div className="lyrics-text">
-                {originalLyrics.split('\n').map((line, index) => (
-                  <p key={index} className="lyric-line">
-                    {line.trim() || '\u00A0'}
-                  </p>
+            ) : error ? (
+              <div className="no-lyrics">{error}</div>
+            ) : (
+              <div
+                ref={originalLyricsRef}
+                className="lyrics-text"
+                onScroll={() =>
+                  handleScroll(originalLyricsRef, translatedLyricsRef)
+                }
+              >
+                {lyrics.original.split("\n").map((line, index) => (
+                  <div key={index} className="lyric-line">
+                    {line || "\u00A0"}
+                  </div>
                 ))}
               </div>
-            ) : (
-              <p className="no-lyrics">Letras no disponibles</p>
             )}
           </div>
 
           <div className="lyrics-column">
-            <h3>🌍 Letra Traducida ({targetLanguage.toUpperCase()})</h3>
-            {loadingTranslation ? (
+            <h3>🌍 Traducción (EN)</h3>
+            {loading ? (
               <div className="lyrics-loading">
                 <div className="spinner"></div>
-                <p>Traduciendo...</p>
+                <p>Cargando traducción...</p>
               </div>
-            ) : translatedLyrics ? (
-              <div className="lyrics-text">
-                {translatedLyrics.split('\n').map((line, index) => (
-                  <p key={index} className="lyric-line">
-                    {line.trim() || '\u00A0'}
-                  </p>
+            ) : error ? (
+              <div className="no-lyrics">{error}</div>
+            ) : (
+              <div
+                ref={translatedLyricsRef}
+                className="lyrics-text"
+                onScroll={() =>
+                  handleScroll(translatedLyricsRef, originalLyricsRef)
+                }
+              >
+                {lyrics.translated.split("\n").map((line, index) => (
+                  <div key={index} className="lyric-line">
+                    {line || "\u00A0"}
+                  </div>
                 ))}
               </div>
-            ) : (
-              <p className="no-lyrics">Traducción no disponible</p>
             )}
           </div>
         </div>
 
         {error && (
-          <div className="player-error">{error}</div>
+          <div className="player-error">
+            <p>{error}</p>
+          </div>
         )}
       </div>
     </div>

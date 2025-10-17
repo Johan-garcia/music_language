@@ -3,235 +3,104 @@ import logging
 from typing import List, Dict, Optional
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-import re
 
 logger = logging.getLogger(__name__)
 
-
 class YouTubeService:
-    """
-    Servicio mejorado de YouTube con mejor extracción de títulos
-    """
-    
     def __init__(self):
         self.api_key = os.getenv("YOUTUBE_API_KEY")
+        self.youtube = None
         
-        if not self.api_key:
-            logger.warning("⚠️ YOUTUBE_API_KEY no configurada")
-            self.youtube = None
-        else:
+        # 🔍 AGREGAR ESTOS LOGS PARA DEBUG
+        logger.info(f"🔍 Inicializando YouTube Service...")
+        logger.info(f"🔑 API Key presente: {'Sí' if self.api_key else 'No'}")
+        
+        if self.api_key:
+            logger.info(f"🔑 API Key (primeros 10 chars): {self.api_key[:10]}...")
             try:
                 self.youtube = build('youtube', 'v3', developerKey=self.api_key)
-                logger.info("✅ YouTube Service initialized")
+                logger.info("✅ YouTube API inicializada correctamente")
             except Exception as e:
-                logger.error(f"❌ Error inicializando YouTube API: {e}")
+                logger.error(f"❌ Error al inicializar YouTube API: {e}")
                 self.youtube = None
-    
-    def is_available(self) -> bool:
-        """Check if YouTube API is available"""
-        return self.youtube is not None
+        else:
+            logger.warning("⚠️ YouTube API Key NO encontrada en variables de entorno")
     
     async def search_music(self, query: str, limit: int = 10) -> List[Dict]:
-        """
-        Busca música en YouTube con mejor parsing de títulos
-        """
-        if not self.is_available():
-            logger.error("YouTube API no disponible")
-            return []
+        """Search for music on YouTube"""
+        logger.info(f"🎵 Buscando en YouTube: '{query}' (limit: {limit})")
+        
+        if not self.youtube:
+            logger.warning("⚠️ YouTube API no disponible, usando datos mock")
+            return self._get_mock_youtube_results(query, limit)
         
         try:
-            logger.info(f"🔍 Buscando en YouTube: '{query}'")
+            # Agregar "official video" o "official audio" para mejores resultados
+            search_query = f"{query} official video"
+            logger.info(f"🔍 Query de búsqueda: {search_query}")
             
-            # Buscar videos
             search_response = self.youtube.search().list(
-                q=query,
+                q=search_query,
                 part='id,snippet',
                 maxResults=limit,
                 type='video',
-                videoCategoryId='10',  # Categoría de música
-                relevanceLanguage='es'
+                videoCategoryId='10'  # Music category
             ).execute()
             
             results = []
-            
             for item in search_response.get('items', []):
-                try:
+                if 'videoId' in item['id']:
                     video_id = item['id']['videoId']
-                    snippet = item['snippet']
+                    title = item['snippet']['title']
+                    channel = item['snippet']['channelTitle']
                     
-                    # Título completo del video
-                    full_title = snippet['title']
+                    # Obtener la mejor calidad de thumbnail
+                    thumbnails = item['snippet']['thumbnails']
+                    thumbnail = (
+                        thumbnails.get('high', {}).get('url') or
+                        thumbnails.get('medium', {}).get('url') or
+                        thumbnails.get('default', {}).get('url')
+                    )
                     
-                    # 🆕 EXTRAER título y artista de forma inteligente
-                    title, artist = self._parse_title_and_artist(full_title)
-                    
-                    # Validar que no sean genéricos
-                    if self._is_valid_song(title, artist):
-                        result = {
-                            'title': title,
-                            'artist': artist,
-                            'youtube_id': video_id,
-                            'thumbnail_url': snippet['thumbnails'].get('high', {}).get('url') or 
-                                           snippet['thumbnails'].get('medium', {}).get('url'),
-                            'channel_title': snippet.get('channelTitle', '')
-                        }
-                        
-                        results.append(result)
-                        logger.info(f"   ✅ {artist} - {title}")
-                    else:
-                        logger.warning(f"   ⚠️ Título inválido: {full_title}")
-                
-                except Exception as e:
-                    logger.error(f"   ❌ Error procesando item: {e}")
-                    continue
+                    result = {
+                        'youtube_id': video_id,
+                        'title': title,
+                        'artist': channel,
+                        'thumbnail_url': thumbnail
+                    }
+                    results.append(result)
+                    logger.info(f"✅ Encontrado: {title} (ID: {video_id})")
             
-            logger.info(f"✅ {len(results)} resultados válidos")
+            logger.info(f"✅ Total encontrados en YouTube: {len(results)}")
             return results
             
         except HttpError as e:
-            logger.error(f"❌ YouTube API error: {e}")
-            return []
+            logger.error(f"❌ YouTube API HttpError: {e}")
+            logger.error(f"Detalles: {e.content if hasattr(e, 'content') else 'N/A'}")
+            return self._get_mock_youtube_results(query, limit)
         except Exception as e:
-            logger.error(f"❌ Error inesperado: {e}")
-            return []
+            logger.error(f"❌ YouTube service error: {e}")
+            logger.error(f"Tipo de error: {type(e).__name__}")
+            return self._get_mock_youtube_results(query, limit)
     
-    def _parse_title_and_artist(self, full_title: str) -> tuple:
-        """
-        🆕 PARSEA título y artista de forma inteligente
-        
-        Ejemplos:
-        - "Bad Bunny - Un x100to (Official Video)" → ("Un x100to", "Bad Bunny")
-        - "Karol G, Shakira - TQG" → ("TQG", "Karol G, Shakira")
-        - "ROSALÍA - DESPECHÁ" → ("DESPECHÁ", "ROSALÍA")
-        """
-        
-        # Guardar título original para fallback
-        original = full_title
-        
-        # Limpiar ruido común ANTES de separar
-        cleaned = full_title
-        
-        # Remover patrones de ruido pero MANTENER el contenido principal
-        noise_patterns = [
-            r'\s*\(Official Video\)',
-            r'\s*\(Official Music Video\)',
-            r'\s*\(Official Audio\)',
-            r'\s*\(Lyric Video\)',
-            r'\s*\(Lyrics\)',
-            r'\s*\[Official Video\]',
-            r'\s*\[Official Audio\]',
-            r'\s*-\s*Official Video',
-            r'\s*Official Video',
-            r'\s*\(Video Oficial\)',
-            r'\s*Video Oficial',
-            r'\s*\(Visualizer\)',
-            r'\s*\| Official',
-            r'\s*VEVO$',
-        ]
-        
-        for pattern in noise_patterns:
-            cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
-        
-        cleaned = cleaned.strip()
-        
-        # Intentar separar por guión (formato más común)
-        if ' - ' in cleaned:
-            parts = cleaned.split(' - ', 1)
-            artist = parts[0].strip()
-            title = parts[1].strip()
-            
-            # Limpiar título de paréntesis finales
-            title = re.sub(r'\s*\([^)]*\)$', '', title).strip()
-            
-            return (title, artist)
-        
-        # Intentar separar por dos puntos
-        elif ': ' in cleaned:
-            parts = cleaned.split(': ', 1)
-            artist = parts[0].strip()
-            title = parts[1].strip()
-            return (title, artist)
-        
-        # Si no hay separador claro, usar el título completo
-        else:
-            # Intentar detectar si empieza con nombre de artista conocido
-            # Si tiene palabras en mayúsculas al inicio, probablemente sea el artista
-            words = cleaned.split()
-            
-            if len(words) >= 2:
-                # Si las primeras palabras están en mayúsculas, probablemente sean el artista
-                if words[0][0].isupper():
-                    # Tomar primeras 1-3 palabras como artista
-                    if len(words) >= 4:
-                        artist = ' '.join(words[:2])
-                        title = ' '.join(words[2:])
-                    else:
-                        artist = words[0]
-                        title = ' '.join(words[1:])
-                    
-                    return (title, artist)
-            
-            # Fallback: usar el título completo como título, artista = "Varios"
-            return (cleaned, "Artista Desconocido")
+    async def get_streaming_url(self, video_id: str) -> Optional[str]:
+        """Get YouTube streaming URL for a video"""
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        logger.info(f"🔗 Generando URL de streaming: {url}")
+        return url
     
-    def _is_valid_song(self, title: str, artist: str) -> bool:
-        """
-        Valida que el título y artista sean válidos
-        """
-        # No debe tener "Song" + número
-        if re.match(r'^Song \d+$', title, re.IGNORECASE):
-            return False
-        
-        # No debe tener "Artist" + número
-        if re.match(r'^Artist \d+$', artist, re.IGNORECASE):
-            return False
-        
-        # Debe tener al menos 2 caracteres
-        if len(title) < 2 or len(artist) < 2:
-            return False
-        
-        # No debe ser solo números
-        if title.isdigit() or artist.isdigit():
-            return False
-        
-        # No debe contener palabras prohibidas
-        forbidden = ['test', 'sample', 'example', 'dummy']
-        if any(word in title.lower() for word in forbidden):
-            return False
-        
-        return True
-    
-    async def get_streaming_url(self, youtube_id: str) -> Optional[str]:
-        """
-        Retorna URL de YouTube embebido
-        """
-        if not youtube_id:
-            return None
-        
-        return f"https://www.youtube.com/watch?v={youtube_id}"
-    
-    async def get_video_details(self, youtube_id: str) -> Optional[Dict]:
-        """
-        Obtiene detalles adicionales de un video
-        """
-        if not self.is_available():
-            return None
-        
-        try:
-            response = self.youtube.videos().list(
-                part='snippet,contentDetails,statistics',
-                id=youtube_id
-            ).execute()
-            
-            if response.get('items'):
-                return response['items'][0]
-            
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error obteniendo detalles: {e}")
-            return None
+    def _get_mock_youtube_results(self, query: str, limit: int) -> List[Dict]:
+        """Return mock YouTube results for testing"""
+        logger.warning(f"⚠️ Usando resultados MOCK para: {query}")
+        mock_results = []
+        for i in range(min(limit, 5)):
+            mock_results.append({
+                'youtube_id': f'mock_yt_{i}_{query.replace(" ", "_")}',
+                'title': f'{query.title()} Song {i+1}',
+                'artist': f'Artist {i+1}',
+                'thumbnail_url': 'https://via.placeholder.com/120x90'
+            })
+        return mock_results
 
-
-# Instancia global
+# Crear instancia global
 youtube_service = YouTubeService()

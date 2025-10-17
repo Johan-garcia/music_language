@@ -16,21 +16,28 @@
 .recommendations-header h2 {
   margin: 0;
   font-size: 2rem;
-  color: #333;
+  color: white;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
 }
 
 .refresh-btn {
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1DB954;
   color: white;
   border: none;
   border-radius: 10px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s;
 }
 
 .refresh-btn:hover:not(:disabled) {
+  background: #1ED760;
   transform: scale(1.05);
 }
 
@@ -39,16 +46,61 @@
   cursor: not-allowed;
 }
 
+.initialize-btn {
+  padding: 10px 20px;
+  background: #1DB954;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.initialize-btn:hover:not(:disabled) {
+  background: #1ED760;
+  transform: scale(1.05);
+}
+
+.initialize-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.initialize-btn-large {
+  padding: 15px 30px;
+  background: #1DB954;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s;
+}
+
+.initialize-btn-large:hover {
+  background: #1ED760;
+  transform: scale(1.05);
+}
+
 .recommendations-loading {
   text-align: center;
   padding: 60px 20px;
 }
 
+.recommendations-loading p {
+  color: white;
+  margin: 10px 0;
+}
+
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #667eea;
+  border: 5px solid rgba(255, 255, 255, 0.1);
+  border-top: 5px solid #1DB954;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 20px;
@@ -62,29 +114,36 @@
 .recommendations-error {
   text-align: center;
   padding: 40px 20px;
-  background: #fee;
+  background: #282828;
   border-radius: 10px;
   margin: 20px 0;
+  border: 1px solid rgba(255, 59, 48, 0.3);
 }
 
 .recommendations-error p {
-  color: #c33;
+  color: #ff3b30;
   margin-bottom: 15px;
 }
 
 .retry-btn {
   padding: 10px 20px;
-  background: #667eea;
+  background: #1DB954;
   color: white;
   border: none;
   border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s;
+}
+
+.retry-btn:hover {
+  background: #1ED760;
 }
 
 .recommendations-empty {
   text-align: center;
   padding: 60px 20px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .recommendations-empty p {
@@ -100,24 +159,26 @@
 }
 
 .recommendation-card {
-  background: white;
+  background: #181818;
   border-radius: 15px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .recommendation-card:hover {
+  background: #282828;
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
 }
 
 .recommendation-thumbnail {
   position: relative;
   width: 100%;
   padding-top: 56.25%; /* 16:9 aspect ratio */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #282828;
   overflow: hidden;
 }
 
@@ -140,7 +201,8 @@
   align-items: center;
   justify-content: center;
   font-size: 3rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #1DB954 0%, #1ED760 100%);
 }
 
 .play-overlay {
@@ -149,7 +211,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,8 +225,8 @@
 
 .play-icon {
   font-size: 3rem;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  color: #1DB954;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .recommendation-info {
@@ -174,15 +236,16 @@
 .recommendation-title {
   margin: 0 0 5px 0;
   font-size: 1.1rem;
-  color: #333;
+  color: white;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
 }
 
 .recommendation-artist {
   margin: 0 0 10px 0;
-  color: #666;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -192,7 +255,7 @@
 .recommendation-reason {
   display: block;
   font-size: 0.85rem;
-  color: #667eea;
+  color: #1DB954;
   font-style: italic;
   margin-bottom: 5px;
 }
@@ -200,50 +263,8 @@
 .recommendation-score {
   display: block;
   font-size: 0.8rem;
-  color: #999;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: bold;
-}
-
-
-.header-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.initialize-btn {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.initialize-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-}
-
-.initialize-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.initialize-btn-large {
-  padding: 15px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1.2rem;
-  cursor: pointer;
-  margin-top: 20px;
-  transition: transform 0.2s;
-}
-
-.initialize-btn-large:hover {
-  transform: scale(1.05);
 }
 
 /* Responsive */
@@ -260,5 +281,15 @@
 
   .recommendations-header h2 {
     font-size: 1.5rem;
+  }
+
+  .header-buttons {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .refresh-btn,
+  .initialize-btn {
+    width: 100%;
   }
 }
