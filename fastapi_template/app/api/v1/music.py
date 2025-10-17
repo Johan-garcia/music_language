@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import re
 import logging
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.models import Song, User
@@ -13,10 +14,21 @@ from app.schemas.schemas import (
 from app.services.youtube_service import youtube_service
 from app.services.spotify_service import spotify_service
 from app.services.lyrics_service import lyrics_service
+from app.services.translation_service import translation_service
 from app.api.v1.auth import get_current_user
 
 logger = logging.getLogger(__name__)
+
+# ✅ PRIMERO: Crear el router
 router = APIRouter()
+
+
+# 🆕 Schema para traducción
+class TranslationRequest(BaseModel):
+    text: str
+    target_lang: str = "en"
+    source_lang: str = "auto"
+
 
 # 🆕 FUNCIONES AUXILIARES PARA LIMPIAR TÍTULOS
 def clean_title_for_lyrics(title: str) -> str:
@@ -46,6 +58,7 @@ def clean_title_for_lyrics(title: str) -> str:
     
     return cleaned.strip()
 
+
 def clean_artist_name(artist: str) -> str:
     """Limpiar nombre de artista"""
     cleaned = artist
@@ -62,98 +75,62 @@ def clean_artist_name(artist: str) -> str:
     
     return cleaned.strip()
 
+
+# ✅ ENDPOINTS
+
 @router.post("/search", response_model=MusicSearchResult)
 async def search_music(
     search_request: MusicSearchRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Search for music using YouTube and Spotify APIs"""
+    """Search for music on YouTube and Spotify"""
     
-    # Search YouTube
+    logger.info(f"🔍 Searching for: {search_request.query}")
+    logger.info(f"   Language: {search_request.language}")
+    logger.info(f"   Limit: {search_request.limit}")
+    
+    # Search on YouTube
     youtube_results = await youtube_service.search_music(
         search_request.query, 
         search_request.limit
     )
     
-    # Search Spotify for metadata
-    spotify_results = await spotify_service.search_track(
-        search_request.query,
-        search_request.limit
-    )
+    logger.info(f"📺 YouTube returned {len(youtube_results)} results")
     
-    # Combine and store results
+    # Store or update songs in database
     songs = []
-    processed_titles = set()
-    
-    # Process YouTube results
     for yt_result in youtube_results:
-        title_key = f"{yt_result['title'].lower()}_{yt_result['artist'].lower()}"
-        if title_key in processed_titles:
-            continue
-        processed_titles.add(title_key)
-        
-        # Check if song already exists in database
+        # Check if song already exists
         existing_song = db.query(Song).filter(
             Song.youtube_id == yt_result['youtube_id']
         ).first()
         
         if existing_song:
             songs.append(existing_song)
+            logger.info(f"   Found existing: {existing_song.title}")
         else:
-            # Create new song entry
+            # Create new song
             new_song = Song(
                 title=yt_result['title'],
                 artist=yt_result['artist'],
                 youtube_id=yt_result['youtube_id'],
                 thumbnail_url=yt_result.get('thumbnail_url'),
-                language=search_request.language or current_user.preferred_language
+                language=search_request.language
             )
-            
-            # Try to find matching Spotify track for additional metadata
-            for sp_result in spotify_results:
-                if (sp_result['title'].lower() in yt_result['title'].lower() or 
-                    yt_result['title'].lower() in sp_result['title'].lower()):
-                    new_song.spotify_id = sp_result['spotify_id']
-                    new_song.duration = sp_result['duration']
-                    break
-            
             db.add(new_song)
             db.commit()
             db.refresh(new_song)
             songs.append(new_song)
+            logger.info(f"   Created new: {new_song.title}")
     
-    # Process remaining Spotify results
-    for sp_result in spotify_results:
-        title_key = f"{sp_result['title'].lower()}_{sp_result['artist'].lower()}"
-        if title_key in processed_titles:
-            continue
-        processed_titles.add(title_key)
-        
-        existing_song = db.query(Song).filter(
-            Song.spotify_id == sp_result['spotify_id']
-        ).first()
-        
-        if existing_song:
-            songs.append(existing_song)
-        else:
-            new_song = Song(
-                title=sp_result['title'],
-                artist=sp_result['artist'],
-                spotify_id=sp_result['spotify_id'],
-                duration=sp_result['duration'],
-                thumbnail_url=sp_result.get('thumbnail_url'),
-                language=search_request.language or current_user.preferred_language
-            )
-            db.add(new_song)
-            db.commit()
-            db.refresh(new_song)
-            songs.append(new_song)
+    logger.info(f"✅ Returning {len(songs)} songs")
     
     return MusicSearchResult(
-        songs=songs[:search_request.limit],
+        songs=songs,
         total=len(songs)
     )
+
 
 @router.get("/stream/{song_id}", response_model=StreamingURL)
 async def get_streaming_url(
@@ -167,21 +144,20 @@ async def get_streaming_url(
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     
-    youtube_url = None
-    audio_url = None
+    # Increment view count
+    song.view_count += 1
+    db.commit()
     
+    # Get YouTube streaming URL
+    youtube_url = None
     if song.youtube_id:
         youtube_url = await youtube_service.get_streaming_url(song.youtube_id)
     
-    # For audio URL, you'd typically use yt-dlp or similar
-    # This is a placeholder implementation
-    if youtube_url:
-        audio_url = youtube_url  # In production, extract actual audio stream
-    
     return StreamingURL(
         youtube_url=youtube_url,
-        audio_url=audio_url
+        audio_url=None
     )
+
 
 @router.get("/lyrics/{song_id}", response_model=LyricsResponse)
 async def get_song_lyrics(
@@ -195,7 +171,7 @@ async def get_song_lyrics(
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     
-    # Check if lyrics already cached
+    # ✅ Check if lyrics already cached
     if song.lyrics and len(song.lyrics) > 50 and "no disponibles" not in song.lyrics.lower():
         logger.info(f"✅ Usando letras en caché para: {song.title}")
         return LyricsResponse(
@@ -213,10 +189,10 @@ async def get_song_lyrics(
     logger.info(f"   Limpio: '{clean_title}' by '{clean_artist}'")
     
     # Fetch lyrics from free lyrics service
-    lyrics = await lyrics_service.get_lyrics(clean_title, clean_artist)
+    lyrics = lyrics_service.get_lyrics(clean_title, clean_artist)
     
     if lyrics and len(lyrics) > 50:
-        # Cache lyrics in database
+        # ✅ Cache lyrics in database
         song.lyrics = lyrics
         db.commit()
         logger.info(f"✅ Letras guardadas en caché")
@@ -227,11 +203,48 @@ async def get_song_lyrics(
             source="free_service"
         )
     else:
-        logger.warning(f"⚠️ No se encontraron letras")
+        logger.warning(f"⚠️ No se encontraron letras para: {song.title}")
+        
+        # Store "not found" marker to avoid repeated searches
+        song.lyrics = f"Letras no disponibles para '{song.title}' by '{song.artist}'"
+        db.commit()
+        
         raise HTTPException(
             status_code=404, 
-            detail=f"Letras no disponibles para '{clean_title}' de {clean_artist}"
+            detail=f"Lyrics not found for '{song.title}'. Tried multiple sources."
         )
+
+
+@router.post("/translate")
+async def translate_text_endpoint(
+    request: TranslationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Traduce texto (letras) al idioma objetivo
+    """
+    logger.info(f"🌍 Traducción solicitada: {request.source_lang} → {request.target_lang}")
+    
+    if not request.text or len(request.text.strip()) == 0:
+        raise HTTPException(status_code=400, detail="El texto no puede estar vacío")
+    
+    # Traducir usando el servicio
+    translated_text = translation_service.translate(
+        request.text, 
+        request.target_lang, 
+        request.source_lang
+    )
+    
+    if not translated_text:
+        raise HTTPException(status_code=500, detail="No se pudo traducir el texto")
+    
+    return {
+        "original": request.text[:200] + "..." if len(request.text) > 200 else request.text,
+        "translated": translated_text,
+        "source_lang": request.source_lang,
+        "target_lang": request.target_lang
+    }
+
 
 @router.get("/song/{song_id}", response_model=SongSchema)
 async def get_song_details(
@@ -245,37 +258,26 @@ async def get_song_details(
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     
-    # Enrich with additional data if needed
-    if song.spotify_id and not song.audio_features:
-        features = await spotify_service.get_track_features(song.spotify_id)
-        if features:
-            import json
-            song.audio_features = json.dumps(features)
-            db.commit()
-    
     return song
+
 
 @router.get("/trending")
 async def get_trending_music(
-    language: Optional[str] = Query(None),
     limit: int = Query(20, le=50),
+    language: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get trending music, optionally filtered by language"""
+    """Get trending music based on view count"""
     
     query = db.query(Song)
     
     if language:
         query = query.filter(Song.language == language)
-    elif current_user.preferred_language:
-        query = query.filter(Song.language == current_user.preferred_language)
     
-    # Simple trending logic - you could implement more sophisticated algorithms
-    trending_songs = query.limit(limit).all()
+    trending_songs = query.order_by(Song.view_count.desc()).limit(limit).all()
     
     return {
-        "songs": trending_songs,
-        "total": len(trending_songs),
-        "language": language or current_user.preferred_language
+        "trending": trending_songs,
+        "total": len(trending_songs)
     }

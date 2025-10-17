@@ -1,57 +1,90 @@
 import { useState, useEffect } from "react";
-import { getRecommendations, getAvailableGenres } from "../services/musicService";
+import { getRecommendations } from "../services/musicService";
+import axios from "axios";
 import "./Recommendations.css";
 
 const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
   const [recommendations, setRecommendations] = useState([]);
-  const [genres, setGenres] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [initializing, setInitializing] = useState(false);
 
   useEffect(() => {
-    loadGenres();
     loadRecommendations();
-  }, []);
+  }, [userLanguage]);
 
-  const loadGenres = async () => {
-    try {
-      const genresList = await getAvailableGenres();
-      setGenres(genresList);
-    } catch (err) {
-      console.error("Error al cargar géneros:", err);
-    }
-  };
-
-  const loadRecommendations = async (genre = null) => {
+  const loadRecommendations = async () => {
     setLoading(true);
     setError("");
     
     try {
-      const response = await getRecommendations(genre, userLanguage, 12);
+      const response = await getRecommendations(null, userLanguage, 20);
       
-      if (response.recommendations && response.recommendations.length > 0) {
+      if (response && response.recommendations && response.recommendations.length > 0) {
         setRecommendations(response.recommendations);
         console.log(`✅ ${response.total} recomendaciones cargadas`);
       } else {
-        setError("No se encontraron recomendaciones");
+        setError("No hay canciones. Haz clic en 'Cargar Canciones' para comenzar.");
+        setRecommendations([]);
       }
     } catch (err) {
-      console.error("Error al cargar recomendaciones:", err);
-      setError("Error al cargar recomendaciones. Intenta nuevamente.");
+      console.error("❌ Error:", err);
+      setError("No hay canciones disponibles.");
+      setRecommendations([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGenreChange = (genre) => {
-    setSelectedGenre(genre);
-    loadRecommendations(genre || null);
+  const handleCleanAndInitialize = async () => {
+    if (!confirm("Esto eliminará las canciones de prueba y cargará canciones reales. ¿Continuar?")) {
+      return;
+    }
+    
+    setInitializing(true);
+    setError("");
+    
+    try {
+      console.log("🧹 Limpiando y cargando canciones reales...");
+      
+      const token = localStorage.getItem("access_token");
+      const response = await axios.post(
+        `http://127.0.0.1:8000/api/v1/recommendations/clean-and-initialize?language=${userLanguage}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 120000, // 2 minutos
+        }
+      );
+      
+      console.log("✅ Resultado:", response.data);
+      alert(`✅ Listo!\n\n- Eliminadas: ${response.data.deleted} canciones de prueba\n- Agregadas: ${response.data.added} canciones reales\n\nAhora puedes reproducir los videos.`);
+      
+      // Recargar
+      await loadRecommendations();
+      
+    } catch (err) {
+      console.error("❌ Error:", err);
+      alert("❌ Error al cargar. Verifica los logs del backend.");
+    } finally {
+      setInitializing(false);
+    }
   };
 
   const handleSongClick = (recommendation) => {
+    const song = recommendation.song;
+    
+    if (!song || !song.youtube_id) {
+      alert("⚠️ Esta canción no tiene video disponible");
+      return;
+    }
+    
+    console.log("🎵 Reproduciendo:", song.title);
+    
     if (onSongSelect) {
-      onSongSelect(recommendation.song);
+      onSongSelect(song);
     }
   };
 
@@ -60,43 +93,72 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
       <div className="recommendations-header">
         <h2>🎵 Recomendaciones para ti</h2>
         
-        <div className="genre-filter">
-          <select
-            value={selectedGenre}
-            onChange={(e) => handleGenreChange(e.target.value)}
-            className="genre-select"
+        <div className="header-buttons">
+          <button 
+            onClick={handleCleanAndInitialize} 
+            className="initialize-btn"
+            disabled={initializing}
+          >
+            {initializing ? "⏳ Cargando (30-60s)..." : "🧹 Cargar Canciones"}
+          </button>
+          
+          <button 
+            onClick={loadRecommendations} 
+            className="refresh-btn"
             disabled={loading}
           >
-            <option value="">Todos los géneros</option>
-            {genres.map((genre) => (
-              <option key={genre} value={genre}>
-                {genre.charAt(0).toUpperCase() + genre.slice(1)}
-              </option>
-            ))}
-          </select>
+            🔄 Actualizar
+          </button>
         </div>
       </div>
 
-      {loading && (
+      {initializing && (
+        <div className="recommendations-loading">
+          <div className="spinner"></div>
+          <p><strong>Cargando canciones reales desde YouTube...</strong></p>
+          <p>Esto puede tomar 30-60 segundos. Por favor espera.</p>
+        </div>
+      )}
+
+      {loading && !initializing && (
         <div className="recommendations-loading">
           <div className="spinner"></div>
           <p>Cargando recomendaciones...</p>
         </div>
       )}
 
-      {error && <div className="recommendations-error">{error}</div>}
+      {error && !loading && !initializing && (
+        <div className="recommendations-error">
+          <p>{error}</p>
+          <button onClick={handleCleanAndInitialize} className="retry-btn">
+            🧹 Cargar Canciones Reales
+          </button>
+        </div>
+      )}
 
-      {!loading && recommendations.length > 0 && (
+      {!loading && !initializing && !error && recommendations.length === 0 && (
+        <div className="recommendations-empty">
+          <p>🎵 No hay canciones disponibles.</p>
+          <button onClick={handleCleanAndInitialize} className="initialize-btn-large">
+            🧹 Cargar Canciones Reales
+          </button>
+        </div>
+      )}
+
+      {!loading && !initializing && recommendations.length > 0 && (
         <div className="recommendations-grid">
           {recommendations.map((rec, index) => (
             <div
-              key={rec.song.id || index}
+              key={rec.song?.id || index}
               className="recommendation-card"
               onClick={() => handleSongClick(rec)}
             >
               <div className="recommendation-thumbnail">
-                {rec.song.thumbnail_url ? (
-                  <img src={rec.song.thumbnail_url} alt={rec.song.title} />
+                {rec.song?.thumbnail_url ? (
+                  <img 
+                    src={rec.song.thumbnail_url} 
+                    alt={rec.song.title}
+                  />
                 ) : (
                   <div className="no-thumbnail">🎵</div>
                 )}
@@ -106,9 +168,15 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
               </div>
               
               <div className="recommendation-info">
-                <h4 className="recommendation-title">{rec.song.title}</h4>
-                <p className="recommendation-artist">{rec.song.artist}</p>
-                <span className="recommendation-reason">{rec.reason}</span>
+                <h4 className="recommendation-title">
+                  {rec.song?.title || "Sin título"}
+                </h4>
+                <p className="recommendation-artist">
+                  {rec.song?.artist || "Desconocido"}
+                </p>
+                <span className="recommendation-reason">
+                  {rec.reason}
+                </span>
               </div>
             </div>
           ))}

@@ -1,3 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+bcrypt
+pytest
+pytest-asyncio
+httpx
 # FastAPI and server
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
@@ -5,13 +15,12 @@ uvicorn[standard]==0.24.0
 # Database
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
-asyncpg==0.29.0
 alembic==1.12.1
 
 # Authentication and security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.0.1
+bcrypt==4.1.1
 python-multipart==0.0.6
 
 # Data validation
@@ -37,11 +46,20 @@ pytest-asyncio==0.21.1
 black==23.11.0
 flake8==6.1.0
 isort==5.12.0
+pydantic[email]
+spotipy
+google-api-python-client
+lyricsgenius
 
 # Monitoring and logging
 structlog==23.2.0
+pydantic-settings
+psycopg2-binary
 
 # Lyrics
-aiohttp==3.9.1
-beautifulsoup4==4.12.2
-lxml==4.9.3
+aiohttp
+beautifulsoup4
+lxml
+
+# 🆕 Translation - Compatible con httpx 0.25.2
+deep-translator==1.11.4
