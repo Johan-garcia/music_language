@@ -60,6 +60,7 @@ psycopg2-binary
 aiohttp
 beautifulsoup4
 lxml
+asyncpg==0.29.0
 
-# 🆕 Translation - Compatible con httpx 0.25.2
+#Translation - Compatible con httpx 0.25.2
 deep-translator==1.11.4
