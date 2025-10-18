@@ -21,7 +21,7 @@ class RecommendationService:
             'similar_language': 0.7,
             'popular': 0.5
         }
-        logger.info("✅ Recommendation Service initialized")
+        logger.info(" Recommendation Service initialized")
     
     async def get_recommendations(
         self, 
@@ -43,43 +43,43 @@ class RecommendationService:
         
         recommendations = []
         
-        # Estrategia 1: Canciones populares con youtube_id
+        
         popular_recs = await self._get_popular_recommendations(db, target_language, limit)
         recommendations.extend(popular_recs)
-        logger.info(f"   ✅ {len(popular_recs)} recomendaciones populares")
+        logger.info(f"    {len(popular_recs)} recomendaciones populares")
         
-        # Estrategia 2: Basado en búsquedas recientes del usuario
+        
         search_based = await self._get_search_based_recommendations(db, user_id, target_language, limit // 2)
         recommendations.extend(search_based)
-        logger.info(f"   ✅ {len(search_based)} basadas en búsquedas")
+        logger.info(f"    {len(search_based)} basadas en búsquedas")
         
-        # Estrategia 3: Trending global
+        
         trending = await self._get_trending_recommendations(db, target_language, limit // 3)
         recommendations.extend(trending)
-        logger.info(f"   ✅ {len(trending)} trending")
+        logger.info(f"   {len(trending)} trending")
         
-        # Estrategia 4: Artistas similares
+        
         user_songs = self._get_user_song_history(db, user_id)
         if user_songs:
             similar_artist_recs = await self._get_similar_artist_recommendations(
                 db, user_songs, target_language, limit // 3
             )
             recommendations.extend(similar_artist_recs)
-            logger.info(f"   ✅ {len(similar_artist_recs)} de artistas similares")
+            logger.info(f"    {len(similar_artist_recs)} de artistas similares")
         
-        # Estrategia 5: Diversidad de géneros
+        
         diverse_recs = await self._get_diverse_recommendations(db, target_language, limit // 4)
         recommendations.extend(diverse_recs)
-        logger.info(f"   ✅ {len(diverse_recs)} diversas")
+        logger.info(f"    {len(diverse_recs)} diversas")
         
-        # Remover duplicados y ordenar por score
+        
         unique_recs = self._remove_duplicates_and_sort(recommendations)
         
-        # ✅ FILTRAR: Solo canciones con youtube_id
-        valid_recs = [rec for rec in unique_recs if rec.song.youtube_id]
-        logger.info(f"   🎬 {len(valid_recs)} con video disponible")
         
-        # Si no hay suficientes con video, buscar en YouTube
+        valid_recs = [rec for rec in unique_recs if rec.song.youtube_id]
+        logger.info(f"   {len(valid_recs)} con video disponible")
+        
+        
         if len(valid_recs) < limit // 2:
             logger.info("   🔍 Pocas canciones con video, buscando más en YouTube...")
             additional = await self._fetch_youtube_recommendations(db, target_language, limit)
@@ -101,7 +101,7 @@ class RecommendationService:
         Busca recomendaciones directamente en YouTube si no hay suficientes en BD
         """
         try:
-            # Queries populares por idioma
+            
             queries_by_language = {
                 'es': [
                     'música latina 2024',
@@ -193,7 +193,7 @@ class RecommendationService:
             popular_songs = db.query(Song).filter(
                 and_(
                     Song.language == language,
-                    Song.youtube_id.isnot(None),  # ✅ Solo con video
+                    Song.youtube_id.isnot(None),  
                     Song.youtube_id != ""
                 )
             ).order_by(
@@ -241,7 +241,7 @@ class RecommendationService:
                     and_(
                         Song.artist.ilike(f"%{artist}%"),
                         Song.language == language,
-                        Song.youtube_id.isnot(None),  # ✅ Solo con video
+                        Song.youtube_id.isnot(None),  
                         Song.id.notin_([s.id for s in user_songs])
                     )
                 ).limit(3).all()
@@ -276,7 +276,7 @@ class RecommendationService:
                 and_(
                     Song.language == language,
                     Song.created_at >= recent_date,
-                    Song.youtube_id.isnot(None)  # ✅ Solo con video
+                    Song.youtube_id.isnot(None)  
                 )
             ).order_by(
                 Song.view_count.desc()
@@ -318,7 +318,7 @@ class RecommendationService:
                             and_(
                                 Song.artist.ilike(f"%{word}%"),
                                 Song.language == language,
-                                Song.youtube_id.isnot(None),  # ✅ Solo con video
+                                Song.youtube_id.isnot(None),  
                                 Song.id.notin_([s.id for s in user_songs])
                             )
                         ).limit(2).all()
@@ -348,7 +348,7 @@ class RecommendationService:
             diverse = db.query(Song).filter(
                 and_(
                     Song.language == language,
-                    Song.youtube_id.isnot(None),  # ✅ Solo con video
+                    Song.youtube_id.isnot(None),  
                     Song.view_count > 0
                 )
             ).order_by(
@@ -424,5 +424,5 @@ class RecommendationService:
         return unique
 
 
-# Instancia global
+
 recommendation_service = RecommendationService()

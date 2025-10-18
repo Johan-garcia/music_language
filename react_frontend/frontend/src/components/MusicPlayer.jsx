@@ -99,7 +99,7 @@ const MusicPlayer = ({ song, onClose }) => {
       throw new Error("No se encontró video para esta canción");
       
     } catch (err) {
-      console.error("❌ Error al cargar video:", err);
+      console.error(" Error al cargar video:", err);
       setError(`No se pudo cargar el video`);
     } finally {
       setLoadingVideo(false);
@@ -146,7 +146,7 @@ const MusicPlayer = ({ song, onClose }) => {
     cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
     cleaned = cleaned.trim();
     
-    console.log("✅ Texto limpio");
+    console.log(" Texto limpio");
     return cleaned;
   };
 
@@ -163,7 +163,7 @@ const MusicPlayer = ({ song, onClose }) => {
         if (cleaned && cleaned.length > 20) {
           setLyrics(cleaned);
           setShowLyrics(true);
-          console.log("✅ Letras cargadas y limpias");
+          console.log(" Letras cargadas y limpias");
         } else {
           throw new Error("Las letras están vacías después de limpiar");
         }
@@ -171,7 +171,7 @@ const MusicPlayer = ({ song, onClose }) => {
         throw new Error("No hay letras disponibles");
       }
     } catch (err) {
-      console.error("❌ Error al cargar letras:", err);
+      console.error(" Error al cargar letras:", err);
       setError("Letras no disponibles para esta canción");
       setLyrics("");
     } finally {
@@ -181,7 +181,7 @@ const MusicPlayer = ({ song, onClose }) => {
 
   const loadTranslation = async (lang) => {
     if (!lyrics) {
-      console.log("⚠️ No hay letras para traducir");
+      console.log(" No hay letras para traducir");
       return;
     }
 
@@ -190,17 +190,17 @@ const MusicPlayer = ({ song, onClose }) => {
     setError("");
 
     try {
-      console.log(`🌍 Traduciendo a: ${lang}`);
+      console.log(` Traduciendo a: ${lang}`);
       const translated = await translateText(lyrics, lang);
       
       if (translated && translated.length > 20) {
         setTranslatedLyrics(translated);
-        console.log("✅ Traducción completada");
+        console.log(" Traducción completada");
       } else {
         throw new Error("Traducción vacía o muy corta");
       }
     } catch (err) {
-      console.error("❌ Error al traducir:", err);
+      console.error(" Error al traducir:", err);
       setTranslatedLyrics("❌ No se pudo traducir las letras.\n\nIntenta seleccionar otro idioma.");
     } finally {
       setLoadingTranslation(false);
@@ -281,7 +281,7 @@ const MusicPlayer = ({ song, onClose }) => {
             </div>
           ) : (
             <div className="no-video-centered">
-              <p>⚠️ Video no disponible</p>
+              <p> Video no disponible</p>
             </div>
           )}
         </div>
@@ -290,7 +290,7 @@ const MusicPlayer = ({ song, onClose }) => {
           
           <div className="lyrics-column left-column">
             <div className="lyrics-section-fullscreen">
-              <h3>📝 Letra Original</h3>
+              <h3> Letra Original</h3>
               {loadingLyrics ? (
                 <div className="lyrics-loading">
                   <div className="spinner-small"></div>

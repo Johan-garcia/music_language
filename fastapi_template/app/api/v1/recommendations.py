@@ -42,12 +42,12 @@ async def clean_and_initialize(
     db: Session = Depends(get_db)
 ):
     """
-    🆕 LIMPIA datos de prueba y carga canciones reales de YouTube
+     LIMPIA datos de prueba y carga canciones reales de YouTube
     """
     
-    logger.info(f"🧹 Limpiando datos de prueba...")
+    logger.info(f" Limpiando datos de prueba...")
     
-    # 1. LIMPIAR: Eliminar canciones sin youtube_id o con nombres genéricos
+    
     fake_songs = db.query(Song).filter(
         (Song.youtube_id == None) | 
         (Song.youtube_id == "") |
@@ -61,10 +61,10 @@ async def clean_and_initialize(
         db.delete(song)
     
     db.commit()
-    logger.info(f"   ✅ Eliminadas {deleted_count} canciones de prueba")
+    logger.info(f"    Eliminadas {deleted_count} canciones de prueba")
     
-    # 2. POBLAR: Agregar canciones reales de YouTube
-    logger.info(f"🚀 Cargando canciones reales de YouTube...")
+    
+    logger.info(f" Cargando canciones reales de YouTube...")
     
     popular_queries = {
         'es': [
@@ -110,7 +110,7 @@ async def clean_and_initialize(
     
     for query in queries:
         try:
-            logger.info(f"   🔍 Buscando: '{query}'")
+            logger.info(f"    Buscando: '{query}'")
             
             youtube_results = await youtube_service.search_music(query, limit=2)
             
@@ -131,15 +131,15 @@ async def clean_and_initialize(
                     )
                     db.add(new_song)
                     new_songs_count += 1
-                    logger.info(f"      ✅ {new_song.title} - {new_song.artist}")
+                    logger.info(f"       {new_song.title} - {new_song.artist}")
             
             db.commit()
             
         except Exception as e:
-            logger.error(f"   ❌ Error: {e}")
+            logger.error(f"    Error: {e}")
             continue
     
-    logger.info(f"✅ Completado: {deleted_count} eliminadas, {new_songs_count} agregadas")
+    logger.info(f" Completado: {deleted_count} eliminadas, {new_songs_count} agregadas")
     
     return {
         "message": "Base de datos actualizada",
@@ -157,7 +157,7 @@ async def initialize_recommendations(
 ):
     """Inicializa con canciones sin limpiar (mantiene las existentes)"""
     
-    logger.info(f"🚀 Agregando canciones para idioma: {language}")
+    logger.info(f" Agregando canciones para idioma: {language}")
     
     popular_queries = {
         'es': [

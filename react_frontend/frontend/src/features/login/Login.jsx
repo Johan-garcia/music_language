@@ -60,7 +60,7 @@ const Login = ({ onLoginSuccess, goToSignUp }) => {  // Verificar este nombre
         </button>
       </form>
 
-      {error && <p className="error">❌ {error}</p>}
+      {error && <p className="error"> {error}</p>}
 
       <p>
         ¿No tienes cuenta?{" "}

@@ -16,5 +16,5 @@ echo "Starting services..."
 docker-compose up -d
 
 echo ""
-echo "✅ Rebuild complete!"
+echo " Rebuild complete!"
 echo "Run ./scripts/status.sh to check services"

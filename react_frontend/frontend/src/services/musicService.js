@@ -1,4 +1,4 @@
-// src/services/musicService.js
+
 import axios from "axios";
 
 const API_URL = "http://127.0.0.1:8000/api/v1/music";
@@ -28,10 +28,10 @@ export const searchMusic = async (query, language = "es", limit = 10) => {
       }
     );
 
-    console.log("✅ Respuesta de búsqueda:", response.data);
+    console.log(" Respuesta de búsqueda:", response.data);
     return response.data;
   } catch (error) {
-    console.error("❌ Error al buscar música:", error);
+    console.error(" Error al buscar música:", error);
     throw error.response?.data || { detail: "Error al buscar música" };
   }
 };
@@ -45,12 +45,12 @@ export const getStreamingUrl = async (songId) => {
 
     return response.data;
   } catch (error) {
-    console.error("❌ Error al obtener URL de streaming:", error);
+    console.error(" Error al obtener URL de streaming:", error);
     throw error.response?.data || { detail: "Error al obtener streaming" };
   }
 };
 
-// --- OBTENER LETRAS ---
+// OBTENER LETRAS 
 export const getLyrics = async (songId) => {
   try {
     const response = await axios.get(`${API_URL}/lyrics/${songId}`, {
@@ -59,7 +59,7 @@ export const getLyrics = async (songId) => {
 
     return response.data;
   } catch (error) {
-    console.error("❌ Error al obtener letras:", error);
+    console.error(" Error al obtener letras:", error);
     throw error.response?.data || { detail: "Letras no disponibles" };
   }
 };
@@ -73,7 +73,7 @@ export const getSongDetails = async (songId) => {
 
     return response.data;
   } catch (error) {
-    console.error("❌ Error al obtener detalles:", error);
+    console.error("Error al obtener detalles:", error);
     throw error.response?.data || { detail: "Error al obtener detalles" };
   }
 };
@@ -91,7 +91,7 @@ export const getTrendingMusic = async (language = null, limit = 20) => {
 
     return response.data;
   } catch (error) {
-    console.error("❌ Error al obtener trending:", error);
+    console.error(" Error al obtener trending:", error);
     throw error.response?.data || { detail: "Error al obtener trending" };
   }
 };
@@ -111,10 +111,10 @@ export const getRecommendations = async (genre = null, language = "es", limit = 
       }
     );
 
-    console.log("✅ Recomendaciones recibidas:", response.data);
+    console.log(" Recomendaciones recibidas:", response.data);
     return response.data;
   } catch (error) {
-    console.error("❌ Error al obtener recomendaciones:", error);
+    console.error(" Error al obtener recomendaciones:", error);
     throw error.response?.data || { detail: "Error al obtener recomendaciones" };
   }
 };
@@ -128,7 +128,7 @@ export const getAvailableGenres = async () => {
 
     return response.data.genres;
   } catch (error) {
-    console.error("❌ Error al obtener géneros:", error);
+    console.error(" Error al obtener géneros:", error);
     // Géneros por defecto si falla
     return [
       "pop", "rock", "hip-hop", "reggaeton", "salsa", 

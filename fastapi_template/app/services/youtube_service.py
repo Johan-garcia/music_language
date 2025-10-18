@@ -11,27 +11,27 @@ class YouTubeService:
         self.api_key = os.getenv("YOUTUBE_API_KEY")
         self.youtube = None
         
-        # 🔍 AGREGAR ESTOS LOGS PARA DEBUG
-        logger.info(f"🔍 Inicializando YouTube Service...")
-        logger.info(f"🔑 API Key presente: {'Sí' if self.api_key else 'No'}")
+        #  AGREGAR ESTOS LOGS PARA DEBUG
+        logger.info(f" Inicializando YouTube Service...")
+        logger.info(f" API Key presente: {'Sí' if self.api_key else 'No'}")
         
         if self.api_key:
-            logger.info(f"🔑 API Key (primeros 10 chars): {self.api_key[:10]}...")
+            logger.info(f" API Key (primeros 10 chars): {self.api_key[:10]}...")
             try:
                 self.youtube = build('youtube', 'v3', developerKey=self.api_key)
-                logger.info("✅ YouTube API inicializada correctamente")
+                logger.info(" YouTube API inicializada correctamente")
             except Exception as e:
-                logger.error(f"❌ Error al inicializar YouTube API: {e}")
+                logger.error(f" Error al inicializar YouTube API: {e}")
                 self.youtube = None
         else:
-            logger.warning("⚠️ YouTube API Key NO encontrada en variables de entorno")
+            logger.warning(" YouTube API Key NO encontrada en variables de entorno")
     
     async def search_music(self, query: str, limit: int = 10) -> List[Dict]:
         """Search for music on YouTube"""
         logger.info(f"🎵 Buscando en YouTube: '{query}' (limit: {limit})")
         
         if not self.youtube:
-            logger.warning("⚠️ YouTube API no disponible, usando datos mock")
+            logger.warning(" YouTube API no disponible, usando datos mock")
             return self._get_mock_youtube_results(query, limit)
         
         try:
@@ -69,17 +69,17 @@ class YouTubeService:
                         'thumbnail_url': thumbnail
                     }
                     results.append(result)
-                    logger.info(f"✅ Encontrado: {title} (ID: {video_id})")
+                    logger.info(f" Encontrado: {title} (ID: {video_id})")
             
-            logger.info(f"✅ Total encontrados en YouTube: {len(results)}")
+            logger.info(f" Total encontrados en YouTube: {len(results)}")
             return results
             
         except HttpError as e:
-            logger.error(f"❌ YouTube API HttpError: {e}")
+            logger.error(f" YouTube API HttpError: {e}")
             logger.error(f"Detalles: {e.content if hasattr(e, 'content') else 'N/A'}")
             return self._get_mock_youtube_results(query, limit)
         except Exception as e:
-            logger.error(f"❌ YouTube service error: {e}")
+            logger.error(f" YouTube service error: {e}")
             logger.error(f"Tipo de error: {type(e).__name__}")
             return self._get_mock_youtube_results(query, limit)
     

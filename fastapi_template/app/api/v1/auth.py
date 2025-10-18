@@ -14,7 +14,7 @@ from app.core.config import settings
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 
-router = APIRouter()
+router = APIRouter()m
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

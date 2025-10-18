@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-# Usamos npm install en vez de npm ci para evitar problemas con optional dependencies
+
 RUN npm install
 
 # Copy source code

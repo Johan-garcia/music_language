@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     
     # Create database tables
     models.Base.metadata.create_all(bind=engine)
-    logger.info("✅ Database tables created")
+    logger.info(" Database tables created")
     
     # Create admin user if it doesn't exist
     from app.database import SessionLocal
@@ -90,7 +90,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# ✅ CORREGIDO: Set up CORS - DEBE estar ANTES de los routers
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,  # Ahora es una lista

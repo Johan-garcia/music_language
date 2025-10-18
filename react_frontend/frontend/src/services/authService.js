@@ -25,7 +25,7 @@ export const registerUser = async (userData) => {
     console.error(" Error al registrar usuario:", error);
     console.error(" Detalles del error:", error.response?.data);
     
-    // Lanzar el error para que lo capture el componente
+    
     if (error.response?.data) {
       throw error.response.data;
     } else if (error.message) {

@@ -19,27 +19,27 @@ from app.api.v1.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 
-# ✅ PRIMERO: Crear el router
+
 router = APIRouter()
 
 
-# 🆕 Schema para traducción
+#  Schema para traducción
 class TranslationRequest(BaseModel):
     text: str
     target_lang: str = "en"
     source_lang: str = "auto"
 
 
-# 🆕 FUNCIONES AUXILIARES PARA LIMPIAR TÍTULOS
+
 def clean_title_for_lyrics(title: str) -> str:
     """Limpiar título para búsqueda de letras"""
     cleaned = title
     
-    # Remover texto entre paréntesis y corchetes
+    
     cleaned = re.sub(r'\([^)]*\)', '', cleaned)
     cleaned = re.sub(r'\[[^\]]*\]', '', cleaned)
     
-    # Remover palabras comunes de videos
+    
     unwanted = [
         'official video', 'official music video', 'official audio',
         'video oficial', 'music video', 'lyric video', 'lyrics',
@@ -49,11 +49,11 @@ def clean_title_for_lyrics(title: str) -> str:
     for word in unwanted:
         cleaned = re.sub(f'\\b{word}\\b', '', cleaned, flags=re.IGNORECASE)
     
-    # Remover &amp; y caracteres HTML
+    
     cleaned = cleaned.replace('&amp;', '&')
     cleaned = re.sub(r'[|]', '', cleaned)
     
-    # Limpiar espacios múltiples
+    
     cleaned = re.sub(r'\s+', ' ', cleaned)
     
     return cleaned.strip()
@@ -63,20 +63,20 @@ def clean_artist_name(artist: str) -> str:
     """Limpiar nombre de artista"""
     cleaned = artist
     
-    # Remover "VEVO" y variantes
+    
     cleaned = re.sub(r'\bVEVO\b', '', cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r'\bOfficial\b', '', cleaned, flags=re.IGNORECASE)
     
-    # Si tiene " - Topic", removerlo
+    
     cleaned = re.sub(r'\s*-\s*Topic$', '', cleaned)
     
-    # Limpiar espacios
+    
     cleaned = re.sub(r'\s+', ' ', cleaned)
     
     return cleaned.strip()
 
 
-# ✅ ENDPOINTS
+
 
 @router.post("/search", response_model=MusicSearchResult)
 async def search_music(
@@ -86,7 +86,7 @@ async def search_music(
 ):
     """Search for music on YouTube and Spotify"""
     
-    logger.info(f"🔍 Searching for: {search_request.query}")
+    logger.info(f" Searching for: {search_request.query}")
     logger.info(f"   Language: {search_request.language}")
     logger.info(f"   Limit: {search_request.limit}")
     
@@ -96,7 +96,7 @@ async def search_music(
         search_request.limit
     )
     
-    logger.info(f"📺 YouTube returned {len(youtube_results)} results")
+    logger.info(f" YouTube returned {len(youtube_results)} results")
     
     # Store or update songs in database
     songs = []
@@ -124,7 +124,7 @@ async def search_music(
             songs.append(new_song)
             logger.info(f"   Created new: {new_song.title}")
     
-    logger.info(f"✅ Returning {len(songs)} songs")
+    logger.info(f" Returning {len(songs)} songs")
     
     return MusicSearchResult(
         songs=songs,
@@ -173,14 +173,14 @@ async def get_song_lyrics(
     
     # ✅ Check if lyrics already cached
     if song.lyrics and len(song.lyrics) > 50 and "no disponibles" not in song.lyrics.lower():
-        logger.info(f"✅ Usando letras en caché para: {song.title}")
+        logger.info(f" Usando letras en caché para: {song.title}")
         return LyricsResponse(
             song_id=song_id,
             lyrics=song.lyrics,
             source="cached"
         )
     
-    # 🆕 LIMPIAR TÍTULO Y ARTISTA ANTES DE BUSCAR
+    
     clean_title = clean_title_for_lyrics(song.title)
     clean_artist = clean_artist_name(song.artist)
     
@@ -192,7 +192,7 @@ async def get_song_lyrics(
     lyrics = lyrics_service.get_lyrics(clean_title, clean_artist)
     
     if lyrics and len(lyrics) > 50:
-        # ✅ Cache lyrics in database
+        
         song.lyrics = lyrics
         db.commit()
         logger.info(f"✅ Letras guardadas en caché")

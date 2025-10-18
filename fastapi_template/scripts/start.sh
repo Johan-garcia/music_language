@@ -5,9 +5,9 @@ echo "🎵 Starting Music Recommendation API..."
 
 # Check if .env file exists
 if [ ! -f .env ]; then
-    echo "⚠️  .env file not found. Creating from template..."
+    echo "  .env file not found. Creating from template..."
     cp .env.example .env
-    echo "📝 Please edit .env file with your API keys before running again."
+    echo " Please edit .env file with your API keys before running again."
     exit 1
 fi
 
@@ -26,7 +26,7 @@ attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
     if curl -f http://localhost:8000/health >/dev/null 2>&1; then
-        echo "✅ API is healthy!"
+        echo " API is healthy!"
         break
     fi
     
@@ -36,12 +36,12 @@ while [ $attempt -lt $max_attempts ]; do
 done
 
 if [ $attempt -eq $max_attempts ]; then
-    echo "❌ API failed to start properly"
+    echo " API failed to start properly"
     docker-compose logs api
     exit 1
 fi
 
-echo "🎉 Music API is running!"
-echo "📖 API Documentation: http://localhost:8000/docs"
-echo "🔍 Health Check: http://localhost:8000/health"
-echo "🛑 To stop: docker-compose down"
+echo " Music API is running!"
+echo " API Documentation: http://localhost:8000/docs"
+echo " Health Check: http://localhost:8000/health"
+echo " To stop: docker-compose down"

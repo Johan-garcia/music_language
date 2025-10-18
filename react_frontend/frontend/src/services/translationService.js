@@ -13,7 +13,7 @@ const getAuthHeaders = () => {
 
 // Función principal de traducción usando el BACKEND
 export const translateText = async (text, targetLang = "en") => {
-  console.log("🌍 Iniciando traducción vía backend...");
+  console.log(" Iniciando traducción vía backend...");
 
   if (!text || text.trim().length === 0) {
     return text;
@@ -38,11 +38,11 @@ export const translateText = async (text, targetLang = "en") => {
       }
     );
 
-    console.log("✅ Traducción completada");
+    console.log(" Traducción completada");
     return response.data.translated;
     
   } catch (error) {
-    console.error("❌ Error al traducir:", error);
+    console.error(" Error al traducir:", error);
     
     if (error.response?.status === 401) {
       throw new Error("No autenticado. Por favor, inicia sesión nuevamente.");
@@ -52,8 +52,8 @@ export const translateText = async (text, targetLang = "en") => {
   }
 };
 
-// Detectar idioma (opcional, ahora el backend lo hace automáticamente)
+// Detectar idioma 
 export const detectLanguage = (text) => {
-  // Esta función ahora es opcional ya que el backend detecta automáticamente
+  
   return "auto";
 };

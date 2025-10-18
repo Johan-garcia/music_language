@@ -29,7 +29,7 @@
 }
 
 .login-form input:focus {
-  outline: 2px solid #1db954; /* verde Spotify */
+  outline: 2px solid #1db954; 
 }
 
 .login-form button {

@@ -13,7 +13,7 @@ const MusicSearch = ({ onSongSelect }) => {
     e.preventDefault();
 
     if (!query.trim()) {
-      setError("⚠️ Ingresa el nombre de una canción o artista");
+      setError(" Ingresa el nombre de una canción o artista");
       return;
     }
 
@@ -26,7 +26,7 @@ const MusicSearch = ({ onSongSelect }) => {
       
       if (response.songs && response.songs.length > 0) {
         setResults(response.songs);
-        console.log(`✅ Se encontraron ${response.total} canciones`);
+        console.log(` Se encontraron ${response.total} canciones`);
       } else {
         setError("No se encontraron resultados");
       }

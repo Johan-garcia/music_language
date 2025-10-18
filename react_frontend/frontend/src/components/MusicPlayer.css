@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: #1a1a1a;
+  background: #121212;
   z-index: 9999;
   padding: 0;
   animation: fadeIn 0.3s ease;
@@ -26,9 +26,9 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: #121212;
   color: white;
-  overflow: hidden; /* Importante: evita scroll en el contenedor principal */
+  overflow: hidden;
 }
 
 /* Header */
@@ -37,7 +37,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px 40px;
-  background: rgba(0, 0, 0, 0.5);
+  background: #181818;
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
@@ -56,7 +56,7 @@
   border-radius: 8px;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .song-thumbnail-mini img {
@@ -71,7 +71,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1DB954 0%, #1ED760 100%);
   font-size: 1.5rem;
 }
 
@@ -96,7 +96,7 @@
 
 .language-selector {
   padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #282828;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   color: white;
@@ -107,8 +107,8 @@
 }
 
 .language-selector:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: #3E3E3E;
+  border-color: #1DB954;
 }
 
 .language-selector:disabled {
@@ -117,13 +117,13 @@
 }
 
 .language-selector option {
-  background: #1a1a2e;
+  background: #282828;
   color: white;
 }
 
 .close-fullscreen-btn {
   padding: 10px 20px;
-  background: rgba(255, 59, 48, 0.9);
+  background: #282828;
   border: none;
   border-radius: 8px;
   color: white;
@@ -134,11 +134,11 @@
 }
 
 .close-fullscreen-btn:hover {
-  background: rgba(255, 59, 48, 1);
+  background: #3E3E3E;
   transform: scale(1.05);
 }
 
-/* Video centrado y más pequeño */
+
 .video-section-centered {
   display: flex;
   justify-content: center;
@@ -151,12 +151,12 @@
   width: 100%;
   max-width: 1500px;
   position: relative;
-  padding-bottom: 5.75%; /* 16:9 aspect ratio para 600px width */
+  padding-bottom: 5.75%; 
   height: 0;
   overflow: hidden;
   border-radius: 12px;
   background: #000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 
 .video-container-centered iframe {
@@ -171,7 +171,7 @@
 .video-loading-centered {
   width: 100%;
   max-width: 600px;
-  background: rgba(0, 0, 0, 0.5);
+  background: #181818;
   padding: 60px 40px;
   border-radius: 12px;
   text-align: center;
@@ -179,8 +179,8 @@
 }
 
 .spinner {
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top: 4px solid white;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #1DB954;
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -202,8 +202,8 @@
 .no-video-centered {
   width: 100%;
   max-width: 600px;
-  background: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.3);
+  background: #181818;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 40px;
   border-radius: 12px;
   text-align: center;
@@ -215,27 +215,27 @@
   margin: 0;
 }
 
-/* Contenido principal: Letras lado a lado */
+
 .player-fullscreen-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 30px;
   padding: 20px 40px 40px 40px;
   flex: 1;
-  overflow: hidden; /* IMPORTANTE: Evita scroll en el contenedor padre */
+  overflow: hidden;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
-  min-height: 0; /* IMPORTANTE: Permite que los hijos respeten el overflow */
+  min-height: 0;
 }
 
 /* Columnas simétricas */
 .lyrics-column {
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* IMPORTANTE: Evita scroll en la columna */
+  overflow: hidden;
   min-width: 0;
-  min-height: 0; /* IMPORTANTE: Permite que el contenido respete overflow */
+  min-height: 0;
 }
 
 .left-column {
@@ -252,13 +252,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.05);
+  background: #181818;
   border-radius: 12px;
   padding: 25px;
-  overflow: hidden; /* IMPORTANTE: Evita scroll en la sección */
+  overflow: hidden;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  min-height: 0; /* IMPORTANTE */
+  min-height: 0;
 }
 
 .lyrics-section-fullscreen h3 {
@@ -266,21 +266,21 @@
   font-size: 1.3rem;
   color: white;
   padding-bottom: 15px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
   text-align: center;
 }
 
-/* ESTE ES EL CONTENEDOR CLAVE QUE DEBE TENER SCROLL */
+
 .lyrics-text-fullscreen {
   flex: 1;
-  overflow-y: auto; /* IMPORTANTE: Habilita scroll vertical */
+  overflow-y: auto;
   overflow-x: hidden;
   padding-right: 15px;
   line-height: 2;
   font-family: 'Georgia', serif;
-  min-height: 0; /* IMPORTANTE */
-  max-height: 100%; /* IMPORTANTE */
+  min-height: 0;
+  max-height: 100%;
 }
 
 .lyric-line {
@@ -293,9 +293,9 @@
 }
 
 .lyric-line:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(29, 185, 84, 0.1);
   padding-left: 20px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #1DB954;
   color: white;
 }
 
@@ -345,8 +345,8 @@
 }
 
 .spinner-small {
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  border-top: 3px solid white;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #1DB954;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -372,7 +372,7 @@
   padding: 40px;
 }
 
-/* Scrollbar personalizado - MUY IMPORTANTE PARA VISUALIZAR EL SCROLL */
+/* Scrollbar personalizado */
 .lyrics-text-fullscreen::-webkit-scrollbar {
   width: 12px;
 }
@@ -383,32 +383,33 @@
 }
 
 .lyrics-text-fullscreen::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: #1DB954;
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 .lyrics-text-fullscreen::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: #1ED760;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
-/* Para Firefox */
+
 .lyrics-text-fullscreen {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
+  scrollbar-color: #1DB954 rgba(255, 255, 255, 0.05);
 }
 
 /* Footer de error */
 .player-error-footer {
-  background: rgba(255, 59, 48, 0.9);
+  background: #282828;
   color: white;
   padding: 15px 40px;
   text-align: center;
   font-weight: 500;
   flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Mensaje cuando no hay letras */
@@ -427,6 +428,7 @@
   font-size: 4rem;
   margin-bottom: 20px;
   opacity: 0.4;
+  color: #1DB954;
 }
 
 .no-lyrics-message p {

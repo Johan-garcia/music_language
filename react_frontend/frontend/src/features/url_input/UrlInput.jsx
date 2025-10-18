@@ -7,7 +7,7 @@ function UrlInput({ onSongData }) {
 
   const handleSearch = async () => {
     if (!query.trim()) {
-      alert("⚠️ Ingresa el nombre de una canción o artista.");
+      alert(" Ingresa el nombre de una canción o artista.");
       return;
     }
 
@@ -28,12 +28,12 @@ function UrlInput({ onSongData }) {
         }
       });
 
-      console.log("✅ Respuesta del backend:", response.data);
+      console.log(" Respuesta del backend:", response.data);
 
       if (onSongData) onSongData(response.data);
 
     } catch (error) {
-      console.error("❌ Error al conectar con el backend:", error);
+      console.error(" Error al conectar con el backend:", error);
       alert("Error al obtener la canción desde el servidor.");
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ function UrlInput({ onSongData }) {
         onClick={handleSearch}
         disabled={loading}
       >
-        {loading ? "🔄 Buscando..." : "🚀 Buscar Canción"}
+        {loading ? " Buscando..." : " Buscar Canción"}
       </button>
     </div>
   );

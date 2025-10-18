@@ -60,13 +60,13 @@ const SignUp = ({ onSignUpSuccess, goToLogin }) => {
         preferred_language: formData.preferred_language
       };
 
-      console.log("📤 Enviando datos de registro:", userData);
+      console.log(" Enviando datos de registro:", userData);
       
       const response = await registerUser(userData);
       
-      console.log("✅ Registro exitoso:", response);
+      console.log(" Registro exitoso:", response);
       
-      setMessage("✅ Usuario registrado correctamente. Redirigiendo al login...");
+      setMessage(" Usuario registrado correctamente. Redirigiendo al login...");
       
       // Limpiar formulario
       setFormData({
@@ -83,7 +83,7 @@ const SignUp = ({ onSignUpSuccess, goToLogin }) => {
       }, 2000);
 
     } catch (err) {
-      console.error("❌ Error al registrar:", err);
+      console.error(" Error al registrar:", err);
       
       // Manejo mejorado de errores
       if (err.detail) {

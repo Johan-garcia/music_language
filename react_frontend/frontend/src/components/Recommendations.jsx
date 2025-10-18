@@ -22,13 +22,13 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
       
       if (response && response.recommendations && response.recommendations.length > 0) {
         setRecommendations(response.recommendations);
-        console.log(`✅ ${response.total} recomendaciones cargadas`);
+        console.log(` ${response.total} recomendaciones cargadas`);
       } else {
         setError("No hay canciones. Haz clic en 'Cargar Canciones' para comenzar.");
         setRecommendations([]);
       }
     } catch (err) {
-      console.error("❌ Error:", err);
+      console.error(" Error:", err);
       setError("No hay canciones disponibles.");
       setRecommendations([]);
     } finally {
@@ -45,7 +45,7 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
     setError("");
     
     try {
-      console.log("🧹 Limpiando y cargando canciones reales...");
+      console.log(" Limpiando y cargando canciones reales...");
       
       const token = localStorage.getItem("access_token");
       const response = await axios.post(
@@ -59,15 +59,15 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
         }
       );
       
-      console.log("✅ Resultado:", response.data);
+      console.log(" Resultado:", response.data);
       alert(`✅ Listo!\n\n- Eliminadas: ${response.data.deleted} canciones de prueba\n- Agregadas: ${response.data.added} canciones reales\n\nAhora puedes reproducir los videos.`);
       
       // Recargar
       await loadRecommendations();
       
     } catch (err) {
-      console.error("❌ Error:", err);
-      alert("❌ Error al cargar. Verifica los logs del backend.");
+      console.error(" Error:", err);
+      alert(" Error al cargar. Verifica los logs del backend.");
     } finally {
       setInitializing(false);
     }
@@ -77,7 +77,7 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
     const song = recommendation.song;
     
     if (!song || !song.youtube_id) {
-      alert("⚠️ Esta canción no tiene video disponible");
+      alert(" Esta canción no tiene video disponible");
       return;
     }
     
@@ -99,7 +99,7 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
             className="initialize-btn"
             disabled={initializing}
           >
-            {initializing ? "⏳ Cargando (30-60s)..." : "🧹 Cargar Canciones"}
+            {initializing ? " Cargando (30-60s)..." : "🧹 Cargar Canciones"}
           </button>
           
           <button 
@@ -107,7 +107,7 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
             className="refresh-btn"
             disabled={loading}
           >
-            🔄 Actualizar
+             Actualizar
           </button>
         </div>
       </div>
@@ -131,7 +131,7 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
         <div className="recommendations-error">
           <p>{error}</p>
           <button onClick={handleCleanAndInitialize} className="retry-btn">
-            🧹 Cargar Canciones Reales
+             Cargar Canciones Reales
           </button>
         </div>
       )}
@@ -140,7 +140,7 @@ const Recommendations = ({ onSongSelect, userLanguage = "es" }) => {
         <div className="recommendations-empty">
           <p>🎵 No hay canciones disponibles.</p>
           <button onClick={handleCleanAndInitialize} className="initialize-btn-large">
-            🧹 Cargar Canciones Reales
+             Cargar Canciones Reales
           </button>
         </div>
       )}

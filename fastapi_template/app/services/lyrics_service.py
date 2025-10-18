@@ -23,18 +23,18 @@ class LyricsService:
             'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
         })
         self.genius_token = os.getenv("GENIUS_ACCESS_TOKEN", "")
-        logger.info("✅ Lyrics Service DEFINITIVO initialized")
+        logger.info(" Lyrics Service DEFINITIVO initialized")
 
     def get_lyrics(self, title: str, artist: str) -> Optional[str]:
         """
         Búsqueda exhaustiva con múltiples variaciones
         """
-        # Generar variaciones de búsqueda
+        
         search_variations = self._generate_search_variations(title, artist)
         
         logger.info(f"🎵 Buscando letras con {len(search_variations)} variaciones")
         
-        # Fuentes en orden de confiabilidad
+        
         sources = [
             ("Lyrics.ovh", self._get_from_lyrics_ovh),
             ("Letras.com", self._get_from_letras_com),
@@ -45,7 +45,7 @@ class LyricsService:
             ("Songlyrics", self._get_from_songlyrics),
         ]
         
-        # Intentar con cada variación
+        
         for variation_title, variation_artist in search_variations:
             logger.info(f"   Variación: '{variation_title}' - '{variation_artist}'")
             
@@ -56,14 +56,14 @@ class LyricsService:
                     lyrics = source_func(variation_title, variation_artist)
                     
                     if lyrics and self._is_valid_lyrics(lyrics):
-                        logger.info(f"      ✅ ¡Encontrado en {source_name}!")
+                        logger.info(f"       ¡Encontrado en {source_name}!")
                         return self._format_lyrics(lyrics, title, artist, source_name)
                         
                 except Exception as e:
                     logger.debug(f"      {source_name} error: {e}")
                     continue
         
-        logger.warning(f"⚠️ No se encontraron letras después de intentar {len(search_variations)} variaciones")
+        logger.warning(f" No se encontraron letras después de intentar {len(search_variations)} variaciones")
         return None
 
     def _generate_search_variations(self, title: str, artist: str) -> List[Tuple[str, str]]:
@@ -72,33 +72,33 @@ class LyricsService:
         """
         variations = []
         
-        # 1. Limpieza estándar
+        
         clean_title = self._clean_text(title)
         clean_artist = self._clean_text(artist)
         variations.append((clean_title, clean_artist))
         
-        # 2. Solo primera parte del título (antes de "-" o "ft")
+        
         simple_title = re.split(r'[-–—]|\bft\b|\bfeat\b', clean_title)[0].strip()
         if simple_title != clean_title:
             variations.append((simple_title, clean_artist))
         
-        # 3. Sin acentos (para mejor matching)
+        
         no_accent_title = self._remove_accents(clean_title)
         no_accent_artist = self._remove_accents(clean_artist)
         if no_accent_title != clean_title:
             variations.append((no_accent_title, no_accent_artist))
         
-        # 4. Solo primer nombre del artista (para artistas múltiples)
+        
         first_artist = clean_artist.split(',')[0].split('&')[0].strip()
         if first_artist != clean_artist:
             variations.append((clean_title, first_artist))
         
-        # 5. Título + artista compacto (sin espacios extras)
+        
         compact_title = re.sub(r'\s+', ' ', clean_title).strip()
         compact_artist = re.sub(r'\s+', ' ', clean_artist).strip()
         variations.append((compact_title, compact_artist))
         
-        # Remover duplicados manteniendo orden
+        
         seen = set()
         unique_variations = []
         for var in variations:
@@ -113,7 +113,7 @@ class LyricsService:
         if not text:
             return ""
         
-        # Remover ruido común
+        
         noise_patterns = [
             (r'\(.*?official.*?\)', ''),
             (r'\[.*?official.*?\]', ''),
@@ -125,17 +125,17 @@ class LyricsService:
             (r'\blyric\s+video\b', ''),
             (r'\bvevo\b', ''),
             (r'\btopic\b', ''),
-            (r'\s*\|.*$', ''),  # Todo después de |
+            (r'\s*\|.*$', ''),  
         ]
         
         cleaned = text
         for pattern, replacement in noise_patterns:
             cleaned = re.sub(pattern, replacement, cleaned, flags=re.IGNORECASE)
         
-        # Limpiar ft./feat.
+        
         cleaned = re.sub(r'\s*\b(ft|feat|featuring)\.?\s+.*$', '', cleaned, flags=re.IGNORECASE)
         
-        # Limpiar espacios
+        
         cleaned = ' '.join(cleaned.split()).strip()
         
         return cleaned
@@ -149,17 +149,17 @@ class LyricsService:
 
     def _is_valid_lyrics(self, text: str) -> bool:
         """Validación mejorada y más flexible"""
-        if not text or len(text) < 80:  # Reducido de 100 a 80
+        if not text or len(text) < 80:  
             return False
         
         text_lower = text.lower()
         
-        # Rechazar contenido claramente inválido
+        
         invalid_patterns = [
             'bienvenido al calendario',
             'esta página agrupa',
             'discografía completa',
-            'english translation lyrics',  # Más específico
+            'english translation lyrics',  
             'letra incompleta',
             'lyrics for this song have not been',
             'we don\'t have lyrics',
@@ -169,13 +169,13 @@ class LyricsService:
             if pattern in text_lower:
                 return False
         
-        # Validar estructura de letra
+        
         lines = [line.strip() for line in text.split('\n') if line.strip()]
         
-        if len(lines) < 8:  # Reducido de 10 a 8
+        if len(lines) < 8:  
             return False
         
-        # Rechazar si tiene muchas URLs
+        
         if len(re.findall(r'https?://', text)) > 2:
             return False
         

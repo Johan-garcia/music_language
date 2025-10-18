@@ -1,9 +1,9 @@
-// src/services/spotifyService.js
+
 import axios from "axios";
 
 const API_URL = "http://127.0.0.1:8000/api/v1/auth";
 
-// --- OBTENER URL DE AUTORIZACIÓN DE SPOTIFY ---
+
 export const getSpotifyAuthUrl = async () => {
   try {
     const token = localStorage.getItem("access_token");
@@ -22,7 +22,7 @@ export const getSpotifyAuthUrl = async () => {
   }
 };
 
-// --- MANEJAR CALLBACK DE SPOTIFY ---
+
 export const handleSpotifyCallback = async (code, state) => {
   try {
     const token = localStorage.getItem("access_token");
@@ -45,14 +45,13 @@ export const handleSpotifyCallback = async (code, state) => {
   }
 };
 
-// --- VERIFICAR ESTADO DE CONEXIÓN DE SPOTIFY ---
+
 export const checkSpotifyConnection = async () => {
   try {
     const token = localStorage.getItem("access_token");
     if (!token) return false;
 
-    // Esto asume que el usuario tiene un campo spotify_connected
-    // Si no existe este endpoint, puedes verificar desde el usuario actual
+    
     const response = await axios.get(`${API_URL}/me`, {
       headers: { 
         Authorization: `Bearer ${token}`,

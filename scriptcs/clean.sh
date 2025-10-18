@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo "🧹 Cleaning Docker resources..."
+echo " Cleaning Docker resources..."
 echo ""
 
-read -p "⚠️  This will remove all containers, volumes, and images. Continue? (y/N): " -n 1 -r
+read -p "  This will remove all containers, volumes, and images. Continue? (y/N): " -n 1 -r
 echo ""
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -17,7 +17,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     docker system prune -f
     
     echo ""
-    echo "✅ Cleanup complete!"
+    echo " Cleanup complete!"
 else
-    echo "❌ Cleanup cancelled."
+    echo " Cleanup cancelled."
 fi

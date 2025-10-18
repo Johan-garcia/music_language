@@ -12,7 +12,7 @@ class TranslationService:
     """
     
     def __init__(self):
-        logger.info("✅ Translation Service initialized")
+        logger.info(" Translation Service initialized")
     
     def translate(self, text: str, target_lang: str = "en", source_lang: str = "auto") -> Optional[str]:
         """
@@ -21,9 +21,9 @@ class TranslationService:
         if not text or len(text.strip()) == 0:
             return text
         
-        logger.info(f"🌍 Traduciendo de {source_lang} a {target_lang}")
+        logger.info(f" Traduciendo de {source_lang} a {target_lang}")
         
-        # Intentar con diferentes servicios
+        
         methods = [
             ("Google Translate", lambda: self._translate_with_google(text, target_lang, source_lang)),
             ("LibreTranslate", lambda: self._translate_with_libre(text, target_lang, source_lang)),
@@ -36,11 +36,11 @@ class TranslationService:
                 result = method()
                 
                 if result and len(result) > 0:
-                    logger.info(f"   ✅ Traducido con {method_name}")
+                    logger.info(f"    Traducido con {method_name}")
                     return result
                     
             except Exception as e:
-                logger.error(f"   ❌ {method_name} falló: {e}")
+                logger.error(f"    {method_name} falló: {e}")
                 continue
         
         logger.warning("⚠️ No se pudo traducir, devolviendo texto original")
@@ -49,7 +49,7 @@ class TranslationService:
     def _translate_with_google(self, text: str, target_lang: str, source_lang: str) -> Optional[str]:
         """Usa Google Translate vía deep-translator"""
         try:
-            # Manejar textos largos
+            
             max_chunk_size = 4500
             
             if len(text) > max_chunk_size:
@@ -63,7 +63,7 @@ class TranslationService:
                     translated = translator.translate(chunk)
                     translated_chunks.append(translated)
                     
-                    time.sleep(0.5)  # Evitar rate limit
+                    time.sleep(0.5)  
                 
                 return "\n\n".join(translated_chunks)
             else:
