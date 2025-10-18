@@ -69,9 +69,7 @@ const Login = ({ onLoginSuccess, goToSignUp }) => {  // Verificar este nombre
         </span>
       </p>
 
-      <div className="admin-hint">
-         Usuario de prueba: admin@gmail.com / adminpassword
-      </div>
+      
     </div>
   );
 };

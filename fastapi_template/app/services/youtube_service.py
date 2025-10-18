@@ -11,7 +11,6 @@ class YouTubeService:
         self.api_key = os.getenv("YOUTUBE_API_KEY")
         self.youtube = None
         
-        #  AGREGAR ESTOS LOGS PARA DEBUG
         logger.info(f" Inicializando YouTube Service...")
         logger.info(f" API Key presente: {'Sí' if self.api_key else 'No'}")
         
@@ -27,7 +26,7 @@ class YouTubeService:
             logger.warning(" YouTube API Key NO encontrada en variables de entorno")
     
     async def search_music(self, query: str, limit: int = 10) -> List[Dict]:
-        """Search for music on YouTube"""
+        """Search for music on YouTube with improved song title matching"""
         logger.info(f"🎵 Buscando en YouTube: '{query}' (limit: {limit})")
         
         if not self.youtube:
@@ -35,8 +34,9 @@ class YouTubeService:
             return self._get_mock_youtube_results(query, limit)
         
         try:
-            # Agregar "official video" o "official audio" para mejores resultados
-            search_query = f"{query} official video"
+            
+            # Esto permite encontrar canciones específicas por nombre
+            search_query = query
             logger.info(f"🔍 Query de búsqueda: {search_query}")
             
             search_response = self.youtube.search().list(
@@ -44,7 +44,9 @@ class YouTubeService:
                 part='id,snippet',
                 maxResults=limit,
                 type='video',
-                videoCategoryId='10'  # Music category
+                videoCategoryId='10',  
+                order='relevance',  
+                safeSearch='none'
             ).execute()
             
             results = []
@@ -54,7 +56,7 @@ class YouTubeService:
                     title = item['snippet']['title']
                     channel = item['snippet']['channelTitle']
                     
-                    # Obtener la mejor calidad de thumbnail
+                    
                     thumbnails = item['snippet']['thumbnails']
                     thumbnail = (
                         thumbnails.get('high', {}).get('url') or
@@ -62,14 +64,17 @@ class YouTubeService:
                         thumbnails.get('default', {}).get('url')
                     )
                     
+                    
+                    artist = self._extract_artist_name(title, channel)
+                    
                     result = {
                         'youtube_id': video_id,
                         'title': title,
-                        'artist': channel,
+                        'artist': artist,
                         'thumbnail_url': thumbnail
                     }
                     results.append(result)
-                    logger.info(f" Encontrado: {title} (ID: {video_id})")
+                    logger.info(f" Encontrado: {title} por {artist} (ID: {video_id})")
             
             logger.info(f" Total encontrados en YouTube: {len(results)}")
             return results
@@ -83,6 +88,26 @@ class YouTubeService:
             logger.error(f"Tipo de error: {type(e).__name__}")
             return self._get_mock_youtube_results(query, limit)
     
+    def _extract_artist_name(self, title: str, channel: str) -> str:
+        """
+         MEJORA: Extraer el nombre del artista del título o canal
+        Muchos videos tienen formato "Artista - Canción" en el título
+        """
+        # Limpiar el canal
+        cleaned_channel = channel.replace('VEVO', '').replace('Official', '').replace('- Topic', '').strip()
+        
+        # Buscar patrón "Artista - Canción" en el título
+        if ' - ' in title:
+            parts = title.split(' - ')
+            if len(parts) >= 2:
+                potential_artist = parts[0].strip()
+                # Si tiene sentido, usar el artista del título
+                if len(potential_artist) > 2 and len(potential_artist) < 50:
+                    return potential_artist
+        
+        # Si no, usar el canal limpio
+        return cleaned_channel if cleaned_channel else channel
+    
     async def get_streaming_url(self, video_id: str) -> Optional[str]:
         """Get YouTube streaming URL for a video"""
         url = f"https://www.youtube.com/watch?v={video_id}"
@@ -91,7 +116,7 @@ class YouTubeService:
     
     def _get_mock_youtube_results(self, query: str, limit: int) -> List[Dict]:
         """Return mock YouTube results for testing"""
-        logger.warning(f"⚠️ Usando resultados MOCK para: {query}")
+        logger.warning(f" Usando resultados MOCK para: {query}")
         mock_results = []
         for i in range(min(limit, 5)):
             mock_results.append({

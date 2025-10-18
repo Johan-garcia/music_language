@@ -35,11 +35,11 @@ def clean_title_for_lyrics(title: str) -> str:
     """Limpiar título para búsqueda de letras"""
     cleaned = title
     
-    
+    # Remover contenido entre paréntesis y corchetes
     cleaned = re.sub(r'\([^)]*\)', '', cleaned)
     cleaned = re.sub(r'\[[^\]]*\]', '', cleaned)
     
-    
+    # Remover palabras no deseadas
     unwanted = [
         'official video', 'official music video', 'official audio',
         'video oficial', 'music video', 'lyric video', 'lyrics',
@@ -49,11 +49,11 @@ def clean_title_for_lyrics(title: str) -> str:
     for word in unwanted:
         cleaned = re.sub(f'\\b{word}\\b', '', cleaned, flags=re.IGNORECASE)
     
-    
+    # Limpiar caracteres especiales
     cleaned = cleaned.replace('&amp;', '&')
     cleaned = re.sub(r'[|]', '', cleaned)
     
-    
+    # Normalizar espacios
     cleaned = re.sub(r'\s+', ' ', cleaned)
     
     return cleaned.strip()
@@ -77,6 +77,36 @@ def clean_artist_name(artist: str) -> str:
 
 
 
+def analyze_search_query(query: str) -> dict:
+    """
+    Analiza la consulta para determinar si busca una canción específica o un artista
+    """
+    query_lower = query.lower()
+    
+    # Palabras clave que indican búsqueda de canción específica
+    song_keywords = ['canción', 'song', 'tema', 'track', 'single']
+    
+    # Si contiene guión, probablemente es "Artista - Canción"
+    if ' - ' in query or '–' in query:
+        return {
+            'type': 'specific_song',
+            'confidence': 'high'
+        }
+    
+    
+    for keyword in song_keywords:
+        if keyword in query_lower:
+            return {
+                'type': 'specific_song',
+                'confidence': 'medium'
+            }
+    
+    # Por defecto, asumir búsqueda general
+    return {
+        'type': 'general',
+        'confidence': 'low'
+    }
+
 
 @router.post("/search", response_model=MusicSearchResult)
 async def search_music(
@@ -84,11 +114,18 @@ async def search_music(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Search for music on YouTube and Spotify"""
+    """
+     MEJORADO: Search for music on YouTube with better song matching
+    Ahora busca tanto por nombre de canción como por artista
+    """
     
     logger.info(f" Searching for: {search_request.query}")
-    logger.info(f"   Language: {search_request.language}")
-    logger.info(f"   Limit: {search_request.limit}")
+    logger.info(f" Language: {search_request.language}")
+    logger.info(f" Limit: {search_request.limit}")
+    
+    # Analizar el tipo de búsqueda
+    query_analysis = analyze_search_query(search_request.query)
+    logger.info(f" Query type: {query_analysis['type']} (confidence: {query_analysis['confidence']})")
     
     # Search on YouTube
     youtube_results = await youtube_service.search_music(
@@ -98,9 +135,23 @@ async def search_music(
     
     logger.info(f" YouTube returned {len(youtube_results)} results")
     
+    # Filtrar duplicados y mejorar resultados
+    seen_titles = set()
+    unique_results = []
+    
+    for yt_result in youtube_results:
+        # Crear una clave única basada en el título normalizado
+        title_key = re.sub(r'[^\w\s]', '', yt_result['title'].lower())
+        
+        if title_key not in seen_titles:
+            seen_titles.add(title_key)
+            unique_results.append(yt_result)
+    
+    logger.info(f" After deduplication: {len(unique_results)} unique results")
+    
     # Store or update songs in database
     songs = []
-    for yt_result in youtube_results:
+    for yt_result in unique_results:
         # Check if song already exists
         existing_song = db.query(Song).filter(
             Song.youtube_id == yt_result['youtube_id']
@@ -108,7 +159,7 @@ async def search_music(
         
         if existing_song:
             songs.append(existing_song)
-            logger.info(f"   Found existing: {existing_song.title}")
+            logger.info(f" Found existing: {existing_song.title}")
         else:
             # Create new song
             new_song = Song(
@@ -122,7 +173,7 @@ async def search_music(
             db.commit()
             db.refresh(new_song)
             songs.append(new_song)
-            logger.info(f"   Created new: {new_song.title}")
+            logger.info(f" Created new: {new_song.title}")
     
     logger.info(f" Returning {len(songs)} songs")
     
@@ -171,7 +222,7 @@ async def get_song_lyrics(
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
     
-    # ✅ Check if lyrics already cached
+    #  Check if lyrics already cached
     if song.lyrics and len(song.lyrics) > 50 and "no disponibles" not in song.lyrics.lower():
         logger.info(f" Usando letras en caché para: {song.title}")
         return LyricsResponse(
@@ -180,7 +231,7 @@ async def get_song_lyrics(
             source="cached"
         )
     
-    
+    # Limpiar título y artista para mejor búsqueda
     clean_title = clean_title_for_lyrics(song.title)
     clean_artist = clean_artist_name(song.artist)
     
@@ -192,10 +243,10 @@ async def get_song_lyrics(
     lyrics = lyrics_service.get_lyrics(clean_title, clean_artist)
     
     if lyrics and len(lyrics) > 50:
-        
+        # Cache the lyrics
         song.lyrics = lyrics
         db.commit()
-        logger.info(f"✅ Letras guardadas en caché")
+        logger.info(f" Letras guardadas en caché")
         
         return LyricsResponse(
             song_id=song_id,
@@ -203,7 +254,7 @@ async def get_song_lyrics(
             source="free_service"
         )
     else:
-        logger.warning(f"⚠️ No se encontraron letras para: {song.title}")
+        logger.warning(f" No se encontraron letras para: {song.title}")
         
         # Store "not found" marker to avoid repeated searches
         song.lyrics = f"Letras no disponibles para '{song.title}' by '{song.artist}'"
@@ -223,7 +274,7 @@ async def translate_text_endpoint(
     """
     Traduce texto (letras) al idioma objetivo
     """
-    logger.info(f"🌍 Traducción solicitada: {request.source_lang} → {request.target_lang}")
+    logger.info(f" Traducción solicitada: {request.source_lang} → {request.target_lang}")
     
     if not request.text or len(request.text.strip()) == 0:
         raise HTTPException(status_code=400, detail="El texto no puede estar vacío")
