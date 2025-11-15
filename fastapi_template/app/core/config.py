@@ -37,6 +37,9 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
+            "http://3.94.46.86:3000",
+            "http://3.94.46.86:5173",
+            "http://3.94.46.86:8080",
         ]
     
     # External API Keys (optional)
