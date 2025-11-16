@@ -32,7 +32,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://music:music@db:5432/musicdb
       PYTHONPATH: /app
-      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://localhost:80,http://frontend:80"
+      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://localhost:80,http://frontend:80,http://3.94.46.86:3000,http://3.94.46.86:5173,http://3.94.46.86:8080"
     ports:
       - "8000:8000"
     volumes:
