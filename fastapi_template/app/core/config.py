@@ -40,6 +40,7 @@ class Settings(BaseSettings):
             "http://3.94.46.86:3000",
             "http://3.94.46.86:5173",
             "http://3.94.46.86:8080",
+            "http://3.94.46.86:5173"
         ]
     
     # External API Keys (optional)
