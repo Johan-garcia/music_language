@@ -40,7 +40,10 @@ class Settings(BaseSettings):
             "http://3.94.46.86:3000",
             "http://3.94.46.86:5173",
             "http://3.94.46.86:8080",
-            "http://3.94.46.86:5173"
+            "http://3.94.46.86:5173",
+            "http://ec2-3-94-46-86.compute-1.amazonaws.com:3000",
+            "http://ec2-3-94-46-86.compute-1.amazonaws.com",
+            "http://ec2-3-94-46-86.compute-1.amazonaws.com:8000"
         ]
     
     # External API Keys (optional)
@@ -59,3 +62,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+print("DEBUG - YOUTUBE_API_KEY DESDE .env =", os.getenv("YOUTUBE_API_KEY"))

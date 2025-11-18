@@ -29,18 +29,8 @@ services:
         condition: service_healthy
     env_file: 
       - ./fastapi_template/.env
-    environment:
-      DATABASE_URL: postgresql+asyncpg://music:music@db:5432/musicdb
-      PYTHONPATH: /app
-      YOUTUBE_API_KEY: AIzaSyCoytfOqpv8wN-B6YJgFEmvQyHboiC778E
-      SPOTIFY_CLIENT_ID: 2c232ac5a4c245328e94668a9e0b0752
-      SPOTIFY_CLIENT_SECRET: 38813e8beca548c5aa7f33c09a528d3b
-      GENIUS_ACCESS_TOKEN: yomUGvA924AB4Q6RalPjqCwA-rO_XFkEJTy4mD3LuGZ_Q7zP5cXkNY0RBp2FDcth
-      GENIUS_CLIENT_ID: CDSk3Pjh34h39XwbKpxc9RcKKNqh1n4MnrCylaeu6m1IgVvWBN48zejwG4sQmtP-
-      GENIUS_CLIENT_SECRET: 5eoUp1o1Dy4jpsnZR0rpfdLfzKn6D4VBmCG8SopEGjdGVEHcG0YDkMOf5gzBC0yCiXFgVZsAP8qoeqvc58SH1A
-      SECRET_KEY: IqQJH6iMqNHGYLPX56bynlnTic62xiE0WDCky0FLgUdbelVgu2lTirmwKmfAwT0B
-
-      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://localhost:80,http://frontend:80,http://3.94.46.86:3000,http://3.94.46.86:5173,http://3.94.46.86:8080"
+    environment:      
+      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://localhost:80,http://frontend:80,http://3.94.46.86:3000,http://3.94.46.86:5173,http://3.94.46.86:8080,http://ec2-3-94-46-86.compute-1.amazonaws.com:3000,http://ec2-3-94-46-86.compute-1.amazonaws.com:8000,http://ec2-3-94-46-86.compute-1.amazonaws.com"
     ports:
       - "8000:8000"
     volumes:
