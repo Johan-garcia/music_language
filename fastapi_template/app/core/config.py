@@ -38,13 +38,14 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
             "http://52.87.251.253",
-            "http://52.87.251.253:3000",
-            "http://52.87.251.253:5173",
+            "http://52.87.251.253:3000",            
             "http://52.87.251.253:8080",
             "http://ec2-52-87-251-253.compute-1.amazonaws.com",
             "http://ec2-52-87-251-253.compute-1.amazonaws.com:3000",
             "http://ec2-52-87-251-253.compute-1.amazonaws.com:8000",
-            "http://ec2-52-87-251-253.compute-1.amazonaws.com:5173",
+            "http://music-balancer-704400099.us-east-1.elb.amazonaws.com",
+            "music-balancer-704400099.us-east-1.elb.amazonaws.com"
+            
         ]
     
     # External API Keys (optional)
