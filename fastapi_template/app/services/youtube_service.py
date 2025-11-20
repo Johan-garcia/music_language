@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class YouTubeService:
     def __init__(self):
-        self.api_key = os.getenv("YOUTUBE_API_KEY")
+        self.api_key = "AIzaSyCoytfOqpv8wN-B6YJgFEmvQyHboiC778E"
         self.youtube = None
         
         logger.info(f" Inicializando YouTube Service...")

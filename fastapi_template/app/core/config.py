@@ -37,13 +37,14 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
-            "http://3.94.46.86:3000",
-            "http://3.94.46.86:5173",
-            "http://3.94.46.86:8080",
-            "http://3.94.46.86:5173",
-            "http://ec2-3-94-46-86.compute-1.amazonaws.com:3000",
-            "http://ec2-3-94-46-86.compute-1.amazonaws.com",
-            "http://ec2-3-94-46-86.compute-1.amazonaws.com:8000"
+            "http://52.87.251.253",
+            "http://52.87.251.253:3000",
+            "http://52.87.251.253:5173",
+            "http://52.87.251.253:8080",
+            "http://ec2-52-87-251-253.compute-1.amazonaws.com",
+            "http://ec2-52-87-251-253.compute-1.amazonaws.com:3000",
+            "http://ec2-52-87-251-253.compute-1.amazonaws.com:8000",
+            "http://ec2-52-87-251-253.compute-1.amazonaws.com:5173",
         ]
     
     # External API Keys (optional)

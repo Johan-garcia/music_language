@@ -30,7 +30,7 @@ services:
     env_file: 
       - ./fastapi_template/.env
     environment:      
-      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://localhost:80,http://frontend:80,http://3.94.46.86:3000,http://3.94.46.86:5173,http://3.94.46.86:8080,http://ec2-3-94-46-86.compute-1.amazonaws.com:3000,http://ec2-3-94-46-86.compute-1.amazonaws.com:8000,http://ec2-3-94-46-86.compute-1.amazonaws.com"
+      BACKEND_CORS_ORIGINS: "http://localhost:3000,http://localhost:80,http://frontend:80,http://52.87.251.253,http://52.87.251.253:3000,http://52.87.251.253:8000,http://52.87.251.253:5173,http://ec2-52-87-251-253.compute-1.amazonaws.com,http://ec2-52-87-251-253.compute-1.amazonaws.com:3000,http://ec2-52-87-251-253.compute-1.amazonaws.com:8000,http://ec2-52-87-251-253.compute-1.amazonaws.com:5173"
     ports:
       - "8000:8000"
     volumes:
