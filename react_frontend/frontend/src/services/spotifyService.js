@@ -1,8 +1,7 @@
 
 import axios from "axios";
 
-const BASE = import.meta.env.VITE_API_BASE_URL + import.meta.env.VITE_API_V1_STR;
-const API_URL = `${BASE}/auth`;
+const API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/auth";
 
 
 export const getSpotifyAuthUrl = async () => {

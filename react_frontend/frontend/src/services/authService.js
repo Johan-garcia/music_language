@@ -4,7 +4,7 @@ import axios from "axios";
 // URL base del backend
 const BASE = import.meta.env.VITE_API_BASE_URL;
 
-const API_URL = `${BASE}${import.meta.env.VITE_API_V1_STR}/auth`
+const API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/auth";
 
 // Configuración global de axios
 axios.defaults.withCredentials = false;

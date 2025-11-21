@@ -1,10 +1,8 @@
 
 import axios from "axios";
 
-const BASE = import.meta.env.VITE_API_BASE_URL + "/api/v1/music";
-
-const API_URL = BASE;
-const RECOMMENDATIONS_URL = `${BASE}/recommendations`;
+const BASE_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/music";
+const RECOMMENDATION_API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/recommendation";
 
 // Obtener token de autenticación
 const getAuthHeaders = () => {
