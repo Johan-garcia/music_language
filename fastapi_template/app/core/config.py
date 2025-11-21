@@ -44,7 +44,8 @@ class Settings(BaseSettings):
             "http://ec2-52-87-251-253.compute-1.amazonaws.com:3000",
             "http://ec2-52-87-251-253.compute-1.amazonaws.com:8000",
             "http://music-balancer-704400099.us-east-1.elb.amazonaws.com",
-            "music-balancer-704400099.us-east-1.elb.amazonaws.com"
+            "https://music-balancer-704400099.us-east-1.elb.amazonaws.com"
+            
             
         ]
     
