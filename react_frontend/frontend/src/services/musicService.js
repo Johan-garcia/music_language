@@ -1,7 +1,7 @@
 
 import axios from "axios";
 
-const BASE = import.meta.env.VITE_API_BASE_URL + import.meta.env.VITE_API_V1_STR;
+const BASE = import.meta.env.VITE_API_BASE_URL + "/api/v1/music";
 
 const API_URL = `${BASE}/music`;
 const RECOMMENDATIONS_URL = `${BASE}/recommendations`;
