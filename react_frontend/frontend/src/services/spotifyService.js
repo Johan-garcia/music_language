@@ -1,7 +1,7 @@
 
 import axios from "axios";
 
-const API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/auth";
+const API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/service";
 
 
 export const getSpotifyAuthUrl = async () => {
