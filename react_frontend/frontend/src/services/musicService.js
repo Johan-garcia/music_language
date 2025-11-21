@@ -1,8 +1,10 @@
 
 import axios from "axios";
 
-const API_URL = "/api/v1/music";
-const RECOMMENDATIONS_URL = "/api/v1/recommendations";
+const BASE = import.meta.env.VITE_API_BASE_URL + import.meta.env.VITE_API_V1_STR;
+
+const API_URL = `${BASE}/music`;
+const RECOMMENDATIONS_URL = `${BASE}/recommendations`;
 
 // Obtener token de autenticación
 const getAuthHeaders = () => {

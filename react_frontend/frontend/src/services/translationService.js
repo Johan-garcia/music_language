@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = "/api/v1";
+const BASE = import.meta.env.VITE_API_BASE_URL + import.meta.env.VITE_API_V1_STR;
+
+const API_URL = `${BASE}`;
 
 // Obtener token de autenticación
 const getAuthHeaders = () => {

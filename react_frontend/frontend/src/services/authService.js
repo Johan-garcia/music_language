@@ -2,7 +2,8 @@
 import axios from "axios";
 
 // URL base del backend
-const API_URL = "/api/v1/auth";
+const BASE = import.meta.env.VITE_API_BASE_URL + import.meta.env.VITE_API_V1_STR;
+const API_URL = `${BASE}/auth`;
 
 // Configuración global de axios
 axios.defaults.withCredentials = false;
