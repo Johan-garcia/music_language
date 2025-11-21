@@ -3,7 +3,7 @@ import axios from "axios";
 
 const BASE = import.meta.env.VITE_API_BASE_URL + "/api/v1/music";
 
-const API_URL = `${BASE}/music`;
+const API_URL = BASE;
 const RECOMMENDATIONS_URL = `${BASE}/recommendations`;
 
 // Obtener token de autenticación
