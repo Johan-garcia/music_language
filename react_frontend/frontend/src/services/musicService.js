@@ -1,8 +1,8 @@
 
 import axios from "axios";
 
-const BASE_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/music";
-const RECOMMENDATION_API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/recommendation";
+const API_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/music";
+const RECOMMENDATIONS_URL = "http://music-balancer-704400099.us-east-1.elb.amazonaws.com/api/v1/recommendations";
 
 // Obtener token de autenticación
 const getAuthHeaders = () => {
